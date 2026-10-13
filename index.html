@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11.1 电流的两条公式 · 可交互课件</title>
+<style>
+  :root{
+    /* A · Manim 基调：纯黑底 + 白线为主 + Manim 官方色常量
+       黄 = 结论量（I、Q、柱体） 蓝 = 负电荷（自由电子） 红 = 正电荷
+       一屏同屏彩色元素 ≤ 3 种；不使用渐变/霓虹/投影 */
+    --bg:#000000; --bg2:#0a0a0a; --panel:#0e0e0e; --line:#242424; --line2:#383838;
+    --ink:#FFFFFF; --ink2:#B0B0B0; --muted:#888888;
+    --pos:#FC6255; --neg:#58C4DD;
+    --yellow:#FFFF00; --gold:#F0AC5F; --green:#83C167; --purple:#9A72AC;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg); color:var(--ink);
+    font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC","WenQuanYi Zen Hei",sans-serif; overflow:hidden;}
+  .app{display:grid; grid-template-rows:auto auto 1fr auto auto; height:100vh;}
+
+  header{display:flex; align-items:baseline; gap:14px; padding:10px 18px 8px; flex-wrap:wrap; row-gap:3px;
+    background:var(--bg2); border-bottom:1px solid var(--line);}
+  header h1{font-size:16px; margin:0; font-weight:600; letter-spacing:.5px; white-space:nowrap;}
+  .act{font-size:13px; color:var(--yellow); border:1px solid var(--line2); border-radius:10px; padding:1px 9px; white-space:nowrap;}
+  .steptitle{font-size:15px; color:var(--ink); font-weight:600;}
+  .stepsn{margin-left:auto; font-size:13px; color:var(--ink2); font-variant-numeric:tabular-nums;}
+
+  .topnav{display:flex; align-items:center; gap:5px; padding:5px 14px 6px;
+    background:var(--bg2); border-bottom:1px solid var(--line); overflow-x:auto; overflow-y:hidden;}
+  .topnav .grouplab{flex:0 0 auto; font-size:11px; letter-spacing:.6px; color:var(--muted); font-weight:600; white-space:nowrap;}
+  .topnav .sep{flex:0 0 auto; width:1px; height:15px; background:var(--line2); margin:0 5px;}
+  .topnav a{flex:0 0 auto; min-width:27px; height:22px; padding:0 7px; display:inline-flex; align-items:center; justify-content:center;
+    font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink2); background:#141414;
+    border:1px solid var(--line2); border-radius:6px; cursor:pointer;}
+  .topnav a:hover{background:#1e1e1e; color:var(--ink);}
+  .topnav a.on{background:rgba(255,255,0,0.12); border-color:var(--yellow); color:var(--yellow); font-weight:700;}
+
+  .stage{display:grid; grid-template-columns:1fr 288px; min-height:0;}
+  .canvaswrap{position:relative; min-width:0; min-height:0; padding:6px 8px 0 8px;}
+  canvas{display:block; width:100%; height:100%;}
+  .hint{padding:7px 20px 0 20px; font-size:12.5px; color:var(--muted); min-height:34px;}
+  .hint b{color:var(--yellow); font-weight:600;}
+
+  aside{background:var(--panel); border-left:1px solid var(--line); padding:10px 12px 14px; overflow-y:auto; min-height:0;}
+  aside h3{font-size:12px; color:var(--muted); margin:14px 0 6px; font-weight:600; letter-spacing:.5px;}
+  aside h3:first-child{margin-top:2px;}
+  .rd{display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:3px 0;
+    font-size:12.5px; color:var(--ink2); border-bottom:1px dashed #242424;}
+  .rd span{white-space:nowrap;}
+  .rd b{font-size:15px; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .rd b.yellow{color:var(--yellow);}
+  .rd b.blue{color:var(--neg);}
+  .rd b.red{color:var(--pos);}
+  .rd b.grey{color:var(--muted);}
+  .formula{font-size:13.5px; color:var(--ink); background:#141414; border:1px solid var(--line2);
+    border-radius:8px; padding:8px 10px; line-height:1.6; word-break:break-word;}
+  .note{font-size:12.5px; color:var(--ink2); line-height:1.62;}
+  .note b{color:var(--yellow); font-weight:600;}
+  .grp{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .grp .lab{font-size:12.5px; color:var(--muted);}
+  button{font-family:inherit; font-size:12.5px; color:var(--ink2); background:#141414;
+    border:1px solid var(--line2); border-radius:6px; padding:5px 10px; cursor:pointer; white-space:nowrap;}
+  button:hover{background:#1e1e1e; color:var(--ink);}
+  button.on{background:rgba(255,255,0,0.12); border-color:var(--yellow); color:var(--yellow); font-weight:700;}
+  button.main{background:#1a1a1a; color:var(--ink);}
+
+  footer{display:flex; align-items:center; gap:8px; flex-wrap:wrap; row-gap:6px;
+    padding:8px 14px 9px; background:var(--bg2); border-top:1px solid var(--line);}
+  .bar{position:relative; flex:1 1 140px; min-width:100px; height:6px; background:#141414; border-radius:3px; cursor:pointer;}
+  .bar i{display:block; height:100%; width:0; background:var(--yellow); border-radius:3px;}
+  .bar u{position:absolute; top:-2px; width:1px; height:10px; background:#4a4a4a;}
+  .slider{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--muted);}
+  .slider input[type=range]{width:104px; accent-color:#4a4a4a;}
+  .slider b{color:var(--ink); font-variant-numeric:tabular-nums; min-width:44px; text-align:right;}
+  .hidden{display:none !important;}
+
+  @media (max-width: 860px){
+    .stage{grid-template-columns:1fr; grid-template-rows:1fr auto;}
+    aside{border-left:none; border-top:1px solid var(--line); max-height:24vh;}
+    .hint{font-size:12px;}
+    header h1{font-size:14px;} .steptitle{font-size:13px;}
+    .slider input[type=range]{width:78px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>11.1 电流的两条公式</h1>
+    <span class="act" id="actTag">第一幕</span>
+    <span class="steptitle" id="stepTitle">—</span>
+    <span class="stepsn" id="stepSn">1 / 15</span>
+  </header>
+
+  <nav class="topnav" id="toc" aria-label="步骤导航"></nav>
+
+  <div class="stage">
+    <div class="canvaswrap"><canvas id="cv"></canvas></div>
+    <aside>
+      <h3>读数</h3>
+      <div class="rd"><span>Q（过截面的电荷量）</span><b class="yellow" id="rdQ">—</b></div>
+      <div class="rd"><span>t（所用的时间）</span><b id="rdT">—</b></div>
+      <div class="rd"><span>I = Q / t（定义式）</span><b class="yellow" id="rdIdef">—</b></div>
+      <div class="rd"><span>I = n q S v（微观式）</span><b class="blue" id="rdImic">—</b></div>
+      <div class="rd"><span>两式相对差</span><b class="grey" id="rdDiff">—</b></div>
+      <h3>微观四量</h3>
+      <div class="rd"><span>n 数密度</span><b id="rdN">—</b></div>
+      <div class="rd"><span>q 单个电荷量</span><b id="rdQq">—</b></div>
+      <div class="rd"><span>S 横截面积</span><b id="rdS">—</b></div>
+      <div class="rd"><span>v 定向移动速率</span><b id="rdV">—</b></div>
+      <h3>这一刻的公式</h3>
+      <div class="formula" id="rdFormula">—</div>
+      <h3>视角</h3>
+      <div class="grp" id="wrapView">
+        <button data-view="solid">立体</button>
+        <button data-view="flat">剖面</button>
+        <button data-view="reset">↺ 复位</button>
+      </div>
+      <div class="note" style="margin-top:6px">在画布上<b style="color:#F0AC5F">拖动</b>可旋转视角，滚轮缩放，双击复位。</div>
+      <h3>提示</h3>
+      <div class="note" id="rdNote"></div>
+    </aside>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <footer>
+    <button id="btnPrev">◀ 上一步</button>
+    <button id="btnNext" class="main">下一步 ▶</button>
+    <button id="btnReset">↺ 复位本步</button>
+    <div class="bar" id="prog"><i></i></div>
+
+    <div class="slider" id="wrapT"><span>时间 t</span><input type="range" id="rgT" min="0" max="20" step="0.1" value="6"><b id="lbT">6.0 s</b></div>
+    <div class="slider" id="wrapI"><span>电流 I</span><input type="range" id="rgI" min="0.2" max="2" step="0.05" value="1"><b id="lbI">1.00 A</b></div>
+    <div class="slider" id="wrapV"><span>速率 v</span><input type="range" id="rgV" min="0" max="100" value="50"><b id="lbV">—</b></div>
+    <div class="slider" id="wrapN"><span>数密度 n</span><input type="range" id="rgN" min="0" max="100" value="50"><b id="lbN">—</b></div>
+    <div class="slider" id="wrapS"><span>截面 S</span><input type="range" id="rgS" min="0.2" max="2" step="0.02" value="1"><b id="lbS">1.00 mm²</b></div>
+
+    <div class="grp" id="wrapCarrier"><span class="lab">载流子</span>
+      <button data-carrier="neg">自由电子（负）</button>
+      <button data-carrier="pos">正电荷</button>
+    </div>
+    <div class="grp" id="wrapMat"><span class="lab">材料</span>
+      <button data-mat="cu">铜</button><button data-mat="ag">银</button><button data-mat="al">铝</button>
+    </div>
+    <div class="grp" id="wrapPick">
+      <button data-pick="def">看定义式的 Q</button>
+      <button data-pick="mic">看微观式的 q</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+
+
+window.VizPhys = (function () {
+'use strict';
+
+var QE = 1.602176634e-19;
+var NA = 6.02214076e23;
+
+var MAT = {
+cu: { key: 'cu', name: '铜', rho: 8.96e3,  M: 63.55,  z: 1 },
+ag: { key: 'ag', name: '银', rho: 10.49e3, M: 107.87, z: 1 },
+al: { key: 'al', name: '铝', rho: 2.70e3,  M: 26.98,  z: 1 }
+};
+
+function Idef(Q, t) { return t > 0 ? Q / t : NaN; }
+function Qof(I, t) { return I * t; }
+
+function Imic(n, q, S, v) { return n * q * S * v; }
+function driftSpeed(I, n, q, S) { return I / (n * q * S); }
+
+function barrelLen(v, t) { return v * t; }
+function barrelVol(S, v, t) { return S * v * t; }
+function barrelCount(n, S, v, t) { return n * S * v * t; }
+function barrelCharge(n, q, S, v, t) { return n * q * S * v * t; }
+
+function slabCharge(n, q, S, d) { return n * q * S * d; }
+function slabCross(v, t, d) { return Math.floor(v * t / d + 1e-9); }
+function slabQ(n, q, S, v, t, d) { return slabCross(v, t, d) * slabCharge(n, q, S, d); }
+
+function travelTime(L, v) { return v > 0 ? L / v : Infinity; }
+function numberDensity(key) {
+var m = MAT[key] || MAT.cu;
+return m.z * m.rho * NA / (m.M * 1e-3);
+}
+function uA(x) { return x * 1e-6; }
+function mA(x) { return x * 1e-3; }
+function mm2(x) { return x * 1e-6; }
+function hour(s) { return s / 3600; }
+
+var SUP = { '-': '⁻', '+': '', '0': '⁰', '1': '¹', '2': '²', '3': '³',
+'4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
+function sup(k) {
+var s = String(k), o = '', i;
+for (i = 0; i < s.length; i++) { o += (SUP[s.charAt(i)] !== undefined ? SUP[s.charAt(i)] : s.charAt(i)); }
+return o;
+}
+function trimZeros(s) {
+if (s.indexOf('.') < 0) { return s; }
+var i = s.length;
+while (i > 0 && s.charAt(i - 1) === '0') { i--; }
+if (i > 0 && s.charAt(i - 1) === '.') { i--; }
+return s.slice(0, i);
+}
+
+function sci(x, dg) {
+if (x === undefined || x === null || !isFinite(x)) { return '—'; }
+if (x === 0) { return '0'; }
+var s = x < 0 ? '−' : '', a = Math.abs(x);
+var e = Math.floor(Math.log10(a) + 1e-12);
+var m = a / Math.pow(10, e);
+if (m >= 10 - 1e-9) { m = m / 10; e = e + 1; }
+if (e >= -2 && e <= 4) { return s + trimZeros(a.toFixed(Math.max(0, dg - e))); }
+return s + m.toFixed(dg) + '×10' + sup(e);
+}
+
+function fx(x, dg, unit) {
+if (x === undefined || x === null || !isFinite(x)) { return '—'; }
+var s = (x < 0 ? '−' : '') + Math.abs(x).toFixed(dg);
+return unit ? (s + ' ' + unit) : s;
+}
+function pct(x, dg) { return fx(x * 100, dg === undefined ? 3 : dg, '%'); }
+
+function dur(s) {
+if (!isFinite(s) || s <= 0) { return '—'; }
+if (s < 1e-6) { return sci(s * 1e9, 2) + ' ns'; }
+if (s < 1e-3) { return sci(s * 1e6, 2) + ' µs'; }
+if (s < 1)    { return sci(s * 1e3, 2) + ' ms'; }
+if (s < 90)   { return fx(s, 1, 's'); }
+if (s < 5400) { return fx(s / 60, 1, 'min'); }
+if (s < 3 * 86400) { return fx(s / 3600, 2, 'h'); }
+return fx(s / 86400, 1, '天');
+}
+
+function len(m) {
+var a = Math.abs(m);
+if (a === 0) { return '0'; }
+if (a < 1e-6) { return sci(m * 1e9, 2) + ' nm'; }
+if (a < 1e-3) { return fx(m * 1e6, 2, 'µm'); }
+if (a < 1)    { return fx(m * 1e3, 3, 'mm'); }
+return fx(m, 3, 'm');
+}
+
+function waveI(t) {
+return 1.00 + 0.55 * Math.sin(2 * Math.PI * t / 4.0) + 0.25 * Math.sin(2 * Math.PI * t / 1.6 + 1.0);
+}
+
+function waveQ(t, N) {
+var n = N || 600, i, s, h;
+if (!(t > 0)) { return 0; }
+h = t / n;
+s = waveI(0) + waveI(t);
+for (i = 1; i < n; i++) { s += waveI(i * h) * (i % 2 ? 4 : 2); }
+return s * h / 3;
+}
+
+function waveAvg(t, N) { return t > 0 ? waveQ(t, N) / t : NaN; }
+
+var WIRE_L = 3e-3;
+var WIRE_R = 3.4e-4;
+function radiusOf(S) { return Math.sqrt(S / Math.PI); }
+
+function runSelfTest() {
+var cases = 0, maxErr = 0, bad = [];
+function rel(a, b) { var d = Math.abs(a - b), m = Math.max(Math.abs(a), Math.abs(b)); return m > 0 ? d / m : d; }
+function chk(cond, tag) { cases++; if (!cond) { bad.push(tag); } }
+function chkRel(a, b, tol, tag) { cases++; var e = rel(a, b); if (e > maxErr) { maxErr = e; } if (!(e <= tol)) { bad.push(tag + ' rel=' + e.toExponential(2)); } }
+function chkEq(a, b, tol, tag) { cases++; var e = Math.abs(a - b); if (e > maxErr) { maxErr = e; } if (!(e <= tol)) { bad.push(tag + ' err=' + e.toExponential(2)); } }
+
+chkRel(numberDensity('cu'), 8.49e28, 0.02, '①n(Cu)');
+chkRel(numberDensity('ag'), 5.86e28, 0.02, '①n(Ag)');
+chkRel(numberDensity('al'), 6.03e28, 0.02, '①n(Al)');
+chk(numberDensity('cu') > 1e28, '①n 量级 10²⁸');
+
+var Is = [1e-6, 0.05, 1, 2, 100], ts = [1e-9, 1e-3, 1, 60, 86400], i, j;
+for (i = 0; i < Is.length; i++) {
+for (j = 0; j < ts.length; j++) {
+chkRel(Idef(Qof(Is[i], ts[j]), ts[j]), Is[i], 1e-12, '②I = (It)/t');
+}
+}
+
+var ns = [1e26, 8.49e28, 5.86e28], vs = [1e-6, 7.35e-5, 1e-3, 2], Ss = [1e-7, 1e-6, 1e-4];
+for (i = 0; i < ns.length; i++) {
+for (j = 0; j < vs.length; j++) {
+var S = Ss[j % Ss.length], n = ns[i], v = vs[j];
+var I0 = Imic(n, QE, S, v);
+var tt = 1e-3;
+chkRel(barrelCharge(n, QE, S, v, tt) / tt, I0, 1e-9, '③柱体法 = 微观式');
+chkRel(Idef(barrelCharge(n, QE, S, v, tt), tt), I0, 1e-9, '③定义式 = 微观式');
+}
+}
+
+for (i = 0; i < vs.length; i++) {
+var S2 = 1e-6, n2 = 8.49e28;
+chkRel(driftSpeed(Imic(n2, QE, S2, vs[i]), n2, QE, S2), vs[i], 1e-9, '④v = I/(nqS) 反解');
+}
+
+var n3 = 8.49e28, S3 = 1e-6, v3 = 7.35e-5, q3 = QE;
+var base = Imic(n3, q3, S3, v3);
+chkRel(Imic(2 * n3, q3, S3, v3), 2 * base, 1e-12, '⑤∝n');
+chkRel(Imic(n3, 2 * q3, S3, v3), 2 * base, 1e-12, '⑤∝q');
+chkRel(Imic(n3, q3, 2 * S3, v3), 2 * base, 1e-12, '⑤∝S');
+chkRel(Imic(n3, q3, S3, 2 * v3), 2 * base, 1e-12, '⑤∝v');
+
+var tv = 2.5;
+chkEq(barrelLen(v3, tv), v3 * tv, 0, '⑥l = vt');
+chkEq(barrelVol(S3, v3, tv), S3 * v3 * tv, 0, '⑥V = Sl');
+chkRel(barrelCount(n3, S3, v3, tv), n3 * S3 * v3 * tv, 1e-12, '⑥N = nSvt');
+chkRel(barrelCharge(n3, q3, S3, v3, tv), barrelCount(n3, S3, v3, tv) * q3, 1e-12, '⑥Q = Nq');
+
+var ds = [1e-5, 5e-5, 2e-4], tds = [0.5, 4, 20];
+for (i = 0; i < ds.length; i++) {
+for (j = 0; j < tds.length; j++) {
+var Qc = barrelCharge(n3, q3, S3, v3, tds[j]);
+var Qd = slabQ(n3, q3, S3, v3, tds[j], ds[i]);
+var one = slabCharge(n3, q3, S3, ds[i]);
+chk(Math.abs(Qd - Qc) <= one * (1 + 1e-9), '⑦离散与连续差 ≤ 一层 (d=' + ds[i] + ', t=' + tds[j] + ')');
+chk(Math.abs(Qd - Qc) <= Math.max(one, Qc * 1e-9), '⑦差值受层厚与浮点双重约束');
+chkRel(slabCross(v3, tds[j], ds[i]) * 1.0, Math.floor(v3 * tds[j] / ds[i] + 1e-9) * 1.0, 0, '⑦整层数一致');
+}
+}
+chk(slabCross(v3, 0, 1e-5) === 0, '⑦t=0 → 过截面层数 0');
+chk(slabQ(n3, q3, S3, v3, 0, 1e-5) === 0, '⑦t=0 → 离散电荷量 0');
+
+chkEq(Imic(n3, q3, S3, 0), 0, 0, '⑧v=0 → I=0');
+chkEq(Imic(0, q3, S3, v3), 0, 0, '⑧n=0 → I=0');
+chkEq(Imic(n3, 0, S3, v3), 0, 0, '⑧q=0 → I=0');
+chkEq(Imic(n3, q3, 0, v3), 0, 0, '⑧S=0 → I=0');
+chk(isNaN(Idef(5, 0)), '⑧t=0 → 定义式不给数（NaN，而不是 Infinity）');
+
+var S4 = mm2(1), nCu = numberDensity('cu');
+var vCu = driftSpeed(1, nCu, QE, S4);
+chkRel(vCu, 7.35e-5, 0.05, '⑨铜 I=1A S=1mm² → v≈7.35×10⁻⁵ m/s');
+chk(vCu * 1e3 > 0.06 && vCu * 1e3 < 0.09, '⑨v 落在 0.06–0.09 mm/s');
+chkRel(hour(travelTime(1, vCu)), 3.78, 0.06, '⑨电子走 1 m 约 3.78 h');
+chkRel(travelTime(1, 2.998e8), 3.34e-9, 0.05, '⑨电场走 1 m 约 3.3 ns');
+
+chkEq(mA(1), 1e-3, 0, '⑩1 mA = 10⁻³ A');
+chkEq(uA(1), 1e-6, 0, '⑩1 µA = 10⁻⁶ A');
+chkEq(mm2(1), 1e-6, 0, '⑩1 mm² = 10⁻⁶ m²');
+chkRel(Qof(1, 1), 1, 0, '⑩1 A·s = 1 C');
+
+var Qbad = barrelCharge(n3, q3, S3, v3, 12);
+var Ibad = Imic(n3, Qbad, S3, v3);
+chk(Ibad / base > 1e3, '⑪误用后电流被放大千倍以上（符号重载警报）');
+chkRel(Ibad / Qbad, base / q3, 1e-9, '⑪放大倍数恰为 Q/q');
+
+var q1 = waveQ(6, 600), q2 = waveQ(6, 6000);
+chkRel(q1, q2, 1e-6, '⑪b辛普森积分收敛');
+chk(waveAvg(6, 6000) > 0.5 && waveAvg(6, 6000) < 1.6, '⑪b平均电流落在 0.5–1.6 A');
+var mn = 1e9, mx = -1e9, kk;
+for (kk = 0; kk <= 400; kk++) { var wv = waveI(kk * 0.06); mn = Math.min(mn, wv); mx = Math.max(mx, wv); }
+chk(mn > 0.02, '⑪b波形恒正（最小 ' + mn.toFixed(3) + ' A）');
+chk(waveQ(0, 600) === 0, '⑪bt=0 → Q=0');
+
+chk(sci(8.49e28, 2) === '8.49×10²⁸', '⑫sci 上标');
+chk(sci(7.35e-5, 2) === '7.35×10⁻⁵', '⑫sci 负指数');
+chk(sci(0, 2) === '0', '⑫sci(0)');
+chk(sci(-1.6e-19, 2) === '−1.60×10⁻¹⁹', '⑫sci 负号用 U+2212');
+chk(sup(-23) === '⁻²³', '⑫sup(-23)');
+
+return { ok: bad.length === 0, cases: cases, maxErr: maxErr, failed: bad.slice(0, 6) };
+}
+
+return {
+QE: QE, NA: NA, MAT: MAT, WIRE_L: WIRE_L,
+Idef: Idef, Qof: Qof,
+Imic: Imic, driftSpeed: driftSpeed,
+barrelLen: barrelLen, barrelVol: barrelVol, barrelCount: barrelCount, barrelCharge: barrelCharge,
+slabCharge: slabCharge, slabCross: slabCross, slabQ: slabQ,
+travelTime: travelTime, numberDensity: numberDensity, radiusOf: radiusOf,
+mA: mA, uA: uA, mm2: mm2, hour: hour,
+sup: sup, sci: sci, fx: fx, pct: pct, dur: dur, len: len, trimZeros: trimZeros,
+waveI: waveI, waveQ: waveQ, waveAvg: waveAvg,
+runSelfTest: runSelfTest
+};
+})();
+
+
+
+window.VizRender = (function () {
+'use strict';
+var P = window.VizPhys;
+
+var T = {
+black: '#000000', white: '#FFFFFF', grey: '#888888',
+red: '#FC6255', blue: '#58C4DD', yellow: '#FFFF00', gold: '#F0AC5F',
+green: '#83C167', purple: '#9A72AC', teal: '#5CD0B3'
+};
+var FONT = '"Microsoft YaHei","PingFang SC","Noto Sans SC","WenQuanYi Zen Hei",sans-serif';
+
+function fnt(sz, w) { return (w || 400) + ' ' + sz + 'px ' + FONT; }
+function rgba(hex, a) {
+var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+
+function fitCanvas(cv) {
+var dpr = Math.min(window.devicePixelRatio || 1, 2);
+var r = cv.getBoundingClientRect();
+var W = Math.max(300, Math.round(r.width)), H = Math.max(220, Math.round(r.height));
+if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+}
+var ctx = cv.getContext('2d');
+ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+return { ctx: ctx, W: W, H: H, dpr: dpr };
+}
+
+function txt(ctx, x, y, s, color, size, align, weight) {
+ctx.save();
+ctx.fillStyle = color || T.white;
+ctx.font = fnt(size || 12, weight || 400);
+ctx.textAlign = align || 'left';
+ctx.textBaseline = 'middle';
+ctx.fillText(s, x, y);
+ctx.restore();
+}
+function line(ctx, a, b, color, lw, dash) {
+ctx.save();
+ctx.strokeStyle = color; ctx.lineWidth = lw || 1.2;
+if (dash) { ctx.setLineDash(dash); }
+ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+ctx.restore();
+}
+function arrow(ctx, a, b, color, lw, head) {
+line(ctx, a, b, color, lw || 2);
+var dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, h = head || 9;
+var ux = dx / L, uy = dy / L, px = -uy, py = ux;
+ctx.save(); ctx.fillStyle = color;
+ctx.beginPath();
+ctx.moveTo(b.x, b.y);
+ctx.lineTo(b.x - ux * h + px * h * 0.42, b.y - uy * h + py * h * 0.42);
+ctx.lineTo(b.x - ux * h - px * h * 0.42, b.y - uy * h - py * h * 0.42);
+ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function dot(ctx, p, r, color, alpha, glow) {
+ctx.save();
+if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; }
+ctx.fillStyle = rgba(color, alpha === undefined ? 1 : alpha);
+ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+ctx.restore();
+}
+function pathPts(ctx, pts, close, color, lw, fill, dash) {
+if (!pts.length) { return; }
+ctx.save();
+ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+for (var i = 1; i < pts.length; i++) { ctx.lineTo(pts[i].x, pts[i].y); }
+if (close) { ctx.closePath(); }
+if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+if (color) {
+ctx.strokeStyle = color; ctx.lineWidth = lw || 1.4;
+if (dash) { ctx.setLineDash(dash); }
+ctx.stroke();
+}
+ctx.restore();
+}
+
+function dimLine(ctx, x1, x2, y, color, label, fs) {
+if (Math.abs(x2 - x1) < 1) { return; }
+line(ctx, { x: x1, y: y }, { x: x2, y: y }, color, 1.2);
+line(ctx, { x: x1, y: y - 5 }, { x: x1, y: y + 5 }, color, 1.2);
+line(ctx, { x: x2, y: y - 5 }, { x: x2, y: y + 5 }, color, 1.2);
+if (label) { txt(ctx, (x1 + x2) / 2, y + 12, label, color, fs || 12, 'center', 600); }
+}
+function panel(ctx, x, y, w, h, stroke, fill) {
+ctx.save();
+ctx.beginPath();
+ctx.rect(x + 0.5, y + 0.5, w - 1, h - 1);
+if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+ctx.restore();
+}
+
+function hull(pts) {
+var a = pts.slice(0).sort(function (p, q) { return p.x === q.x ? p.y - q.y : p.x - q.x; });
+var lower = [], upper = [], i;
+for (i = 0; i < a.length; i++) {
+while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], a[i]) <= 0) { lower.pop(); }
+lower.push(a[i]);
+}
+for (i = a.length - 1; i >= 0; i--) {
+while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], a[i]) <= 0) { upper.pop(); }
+upper.push(a[i]);
+}
+lower.pop(); upper.pop();
+return lower.concat(upper);
+}
+function cross(o, a, b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); }
+
+var XSEC = -0.4e-3;
+function geom(st) {
+var L = P.WIRE_L, r = P.radiusOf(st.S);
+
+var slots = clamp(Math.round(42 * st.n / P.numberDensity('cu')), 8, 66);
+return { L: L, r: r, xs: XSEC, x0: -L / 2, x1: L / 2, slots: slots, d: L / slots };
+}
+function projOf(st, view, area, mode) {
+var g = geom(st);
+var az = view.az, el = view.el;
+var ca = Math.cos(az), sa = Math.sin(az), ce = Math.cos(el), se = Math.sin(el);
+function raw(x, y, zz) {
+if (mode === 'flat') { return { x: x, y: -y, d: zz }; }
+var x1 = x * ca + zz * sa;
+var z1 = -x * sa + zz * ca;
+var y2 = y * ce - z1 * se;
+return { x: x1, y: -y2, d: z1 };
+}
+var probe = [], i, th;
+var rings = mode === 'flat' ? [g.x0, g.x1] : [g.x0, g.x1];
+for (var k = 0; k < rings.length; k++) {
+for (i = 0; i <= 48; i++) {
+th = i / 48 * Math.PI * 2;
+probe.push(raw(rings[k], g.r * Math.cos(th), g.r * Math.sin(th)));
+}
+}
+probe.push(raw(0, g.r * 1.9, 0));
+probe.push(raw(0, -g.r * 2.4, 0));
+var minx = 1e9, maxx = -1e9, miny = 1e9, maxy = -1e9;
+for (i = 0; i < probe.length; i++) {
+minx = Math.min(minx, probe[i].x); maxx = Math.max(maxx, probe[i].x);
+miny = Math.min(miny, probe[i].y); maxy = Math.max(maxy, probe[i].y);
+}
+var sc = Math.min(area.w * 0.88 / (maxx - minx), area.h * 0.94 / (maxy - miny)) * (view.zoom || 1);
+var cx = (minx + maxx) / 2, cy = (miny + maxy) / 2;
+var ox = area.x + area.w / 2, oy = area.y + area.h / 2;
+return {
+scale: sc, g: g,
+p: function (x, y, zz) {
+var s = raw(x, y, zz);
+return { x: ox + (s.x - cx) * sc, y: oy + (s.y - cy) * sc, d: s.d };
+}
+};
+}
+function ringPts(pj, g, x, n) {
+var out = [], i, th;
+n = n || 48;
+for (i = 0; i <= n; i++) { th = i / n * Math.PI * 2; out.push(pj.p(x, g.r * Math.cos(th), g.r * Math.sin(th))); }
+return out;
+}
+
+var PAT = [[-0.42, -0.30], [0.44, 0.18], [0.02, 0.62], [-0.10, -0.66], [0.58, -0.34]];
+function seeds(g) {
+var out = [], k, j;
+for (k = 0; k < g.slots; k++) {
+for (j = 0; j < PAT.length; j++) {
+out.push({ x0: g.x0 + (k + 0.5) * g.d, y: PAT[j][0] * g.r, z: PAT[j][1] * g.r });
+}
+}
+return out;
+}
+function posOf(s, st, g) {
+var L = g.L, x = s.x0 + st.v * st.t;
+x = g.x0 + (((x - g.x0) % L) + L) % L;
+return { x: x, y: s.y, z: s.z };
+}
+
+function drawWire(S, st) {
+var ctx = S.ctx, view = st.view, area = S.main;
+var mode = st.mode === 'flat' ? 'flat' : '3d';
+var pj = projOf(st, view, area, mode);
+var g = pj.g, i;
+S.pj = pj;
+
+if (mode === 'flat') {
+var a = pj.p(g.x0, g.r, 0), b = pj.p(g.x1, -g.r, 0);
+pathPts(ctx, [{ x: a.x, y: a.y }, { x: b.x, y: a.y }, { x: b.x, y: b.y }, { x: a.x, y: b.y }], true,
+T.white, 1.4, rgba(T.grey, 0.18));
+} else {
+var ringA = ringPts(pj, g, g.x0), ringB = ringPts(pj, g, g.x1);
+pathPts(ctx, hull(ringA.concat(ringB)), true, T.white, 1.4, rgba(T.grey, 0.18));
+pathPts(ctx, ringA, true, rgba(T.white, 0.42), 1.1);
+pathPts(ctx, ringB, true, rgba(T.white, 0.42), 1.1);
+}
+
+if (st.show.barrel) {
+var l = P.barrelLen(st.v, st.t), xb = g.xs - l;
+if (l > 1e-7) {
+if (mode === 'flat') {
+var c1 = pj.p(xb, g.r, 0), c2 = pj.p(g.xs, -g.r, 0);
+pathPts(ctx, [{ x: c1.x, y: c1.y }, { x: c2.x, y: c1.y }, { x: c2.x, y: c2.y }, { x: c1.x, y: c2.y }], true,
+T.yellow, 2.2, rgba(T.yellow, 0.18));
+} else {
+pathPts(ctx, hull(ringPts(pj, g, xb).concat(ringPts(pj, g, g.xs))), true, T.yellow, 2.2, rgba(T.yellow, 0.18));
+pathPts(ctx, ringPts(pj, g, xb), true, rgba(T.yellow, 0.55), 1.4, null, [7, 5]);
+}
+}
+}
+
+var sd = seeds(g);
+for (i = 0; i < sd.length; i++) {
+var w = posOf(sd[i], st, g);
+var q = pj.p(w.x, w.y, w.z);
+if (q.x < area.x - 20 || q.x > area.x + area.w + 20) { continue; }
+dot(ctx, q, 2.5, st.carrier === 'pos' ? T.red : T.blue, 0.92, st.show.focus === 'carrier' ? 6 : 0);
+}
+
+if (st.show.section) {
+var ring = ringPts(pj, g, g.xs);
+pathPts(ctx, ring, true, T.yellow, 2.6);
+if (mode === 'flat') {
+var t1 = pj.p(g.xs, g.r, 0), t2 = pj.p(g.xs, -g.r, 0);
+line(ctx, t1, t2, T.yellow, 2.6);
+}
+var top = pj.p(g.xs, g.r, 0);
+line(ctx, { x: top.x, y: top.y }, { x: top.x + 30, y: top.y - 26 }, T.yellow, 1);
+txt(ctx, top.x + 34, top.y - 30, '横截面 S', T.yellow, 12.5, 'left', 600);
+}
+
+if (st.show.arrow) {
+var yTop = g.r * 1.55;
+var m1 = pj.p(g.xs + 0.9e-3, yTop, 0), m2 = pj.p(g.xs + 1.7e-3, yTop, 0);
+arrow(ctx, m1, m2, st.carrier === 'pos' ? T.red : T.blue, 2.2, 10);
+txt(ctx, (m1.x + m2.x) / 2, m1.y - 15,
+st.carrier === 'pos' ? '正电荷定向移动 v' : '自由电子定向移动 v', st.carrier === 'pos' ? T.red : T.blue, 12, 'center', 600);
+}
+
+if (st.show.iArrow) {
+var yB = -g.r * 1.45, k1, k2;
+if (st.carrier === 'pos') { k1 = pj.p(g.xs + 0.9e-3, yB, 0); k2 = pj.p(g.xs + 1.8e-3, yB, 0); }
+else { k1 = pj.p(g.xs + 1.8e-3, yB, 0); k2 = pj.p(g.xs + 0.9e-3, yB, 0); }
+arrow(ctx, k1, k2, T.white, 2.2, 10);
+txt(ctx, (k1.x + k2.x) / 2, k1.y + 17, '电流方向 I（规定为正电荷移动的方向）', rgba(T.white, 0.92), 12, 'center', 600);
+}
+
+if (st.show.barrel && st.show.dim) {
+var l2 = P.barrelLen(st.v, st.t);
+if (l2 > 2e-6) {
+var d1 = pj.p(g.xs - l2, -g.r * 1.75, 0), d2 = pj.p(g.xs, -g.r * 1.75, 0);
+dimLine(ctx, d1.x, d2.x, d1.y, T.yellow, 'l = v·t = ' + P.len(l2), 12.5);
+}
+}
+return S;
+}
+
+function drawQt(S, st, band) {
+var ctx = S.ctx, cmp = S.W < 620;
+var tmax = st.tMax || 20, Qmax = 2.0 * tmax * 1.02;
+var x0 = band.x + (cmp ? 44 : 60), y0 = band.y + band.h - 24;
+var w = band.w - (cmp ? 60 : 96), h = Math.max(44, band.h - 66);
+if (cmp) { h = Math.max(38, band.h - 78); y0 = band.y + band.h - 20; }
+var px = function (t) { return x0 + t / tmax * w; };
+var py = function (Q) { return y0 - clamp(Q, 0, Qmax) / Qmax * h; };
+line(ctx, { x: x0, y: y0 }, { x: x0 + w, y: y0 }, rgba(T.white, 0.55), 1.4);
+line(ctx, { x: x0, y: y0 }, { x: x0, y: y0 - h }, rgba(T.white, 0.55), 1.4);
+txt(ctx, x0 - 7, y0, '0', T.grey, 11, 'right');
+txt(ctx, x0 - 7, y0 - h, P.fx(Qmax, 0), T.grey, 11, 'right');
+txt(ctx, x0 + w, y0 + 13, 't / s', T.grey, 11.5, 'right');
+txt(ctx, x0 - 7, y0 - h - 13, 'Q / C', T.grey, 11.5, 'right');
+line(ctx, { x: px(0), y: py(0) }, { x: px(tmax), y: py(1.0 * tmax) }, rgba(T.white, 0.40), 1.4, [7, 5]);
+txt(ctx, px(tmax) - 6, py(1.0 * tmax) - 12, '参考 I = 1.0 A', rgba(T.white, 0.55), 11, 'right');
+line(ctx, { x: px(0), y: py(0) }, { x: px(tmax), y: py(st.I * tmax) }, T.yellow, 2.6);
+var pt = { x: px(st.t), y: py(st.I * st.t) };
+line(ctx, { x: pt.x, y: pt.y }, { x: pt.x, y: y0 }, rgba(T.yellow, 0.42), 1, [4, 4]);
+line(ctx, { x: x0, y: pt.y }, { x: pt.x, y: pt.y }, rgba(T.yellow, 0.42), 1, [4, 4]);
+dot(ctx, pt, 4.5, T.yellow, 1, 8);
+txt(ctx, band.x + 6, band.y + 12, 'Q = I·t —— 斜率就是 I', T.yellow, cmp ? 12 : 13, 'left', 600);
+txt(ctx, band.x + 6, band.y + (cmp ? 28 : 31), '拖「电流 I」看斜率变陡；拖「时间 t」看点跑到哪儿', T.grey, cmp ? 11 : 11.5, 'left');
+}
+
+function chainLines(st) {
+var g = geom(st), l = P.barrelLen(st.v, st.t);
+return [
+'① 取一段导体：长 L、横截面积 S，内部自由电荷数密度 n（个/m³）',
+'② 每个自由电荷带电量 q，它们都以定向速率 v 向右移动',
+'③ 在 t 内通过横截面的电荷，恰好是截面后方长 l = v·t 的柱体里的全部电荷',
+'④ 柱体体积 V = S·l = S·v·t = ' + P.sci(P.barrelVol(st.S, st.v, st.t), 2) + ' m³',
+'⑤ 柱体内电荷数 N = n·V = ' + P.sci(P.barrelCount(st.n, st.S, st.v, st.t), 2) + ' 个',
+'⑥ 这些电荷在 t 内全部过截面：Q = N·q = ' + P.sci(P.barrelCharge(st.n, st.q, st.S, st.v, st.t), 2) + ' C',
+'⑦ 代回定义式：I = Q/t = n·q·S·v·t / t = n·q·S·v = ' + P.fx(P.Imic(st.n, st.q, st.S, st.v), 3) + ' A'
+];
+}
+function drawChain(S, st, band) {
+var ctx = S.ctx, ls = chainLines(st), upto = st.show.chain || 0, i;
+var y = band.y + 20;
+for (i = 0; i < ls.length; i++) {
+var on = i <= upto;
+if (on) {
+if (i === upto) { txt(ctx, band.x + 8, y, '▶', T.yellow, 12, 'left', 700); }
+txt(ctx, band.x + 26, y, ls[i], i === upto ? T.white : rgba(T.white, 0.62), i === upto ? 12.5 : 12, 'left', i === upto ? 600 : 400);
+} else {
+txt(ctx, band.x + 26, y, ls[i], rgba(T.grey, 0.28), 12, 'left');
+}
+y += 21;
+}
+if (upto >= 6) {
+txt(ctx, band.x + 26, y + 4, '两条式子其实是同一条：定义式 + 微观模型 → 微观表达式',
+rgba(T.yellow, 0.9), 12.5, 'left', 600);
+}
+}
+
+function render(cv, st, cam) {
+var f = fitCanvas(cv);
+
+f.ctx.fillStyle = T.black;
+f.ctx.fillRect(0, 0, f.W, f.H);
+var S = { ctx: f.ctx, W: f.W, H: f.H, theme: T, mainH: f.H };
+var band = (st.show && st.show.band) || 'none', bandH = 0;
+if (band === 'qt') { bandH = clamp(f.H * 0.34, 112, 196); }
+else if (band === 'chain') { bandH = clamp(f.H * 0.42, 146, 246); }
+else if (band === 'units') { bandH = clamp(f.H * 0.30, 118, 172); }
+else if (band === 'four') { bandH = clamp(f.H * 0.25, 92, 140); }
+S.mainH = f.H - bandH;
+S.main = { x: 0, y: 0, w: f.W, h: S.mainH };
+S.band = { x: 14, y: S.mainH + 6, w: f.W - 28, h: bandH - 12 };
+
+if (st.scene === 'wire') {
+drawWire(S, st);
+if (band === 'qt') { drawQt(S, st, S.band); }
+else if (band === 'chain') { drawChain(S, st, S.band); }
+else if (band !== 'none' && window.VizPanels) { window.VizPanels.band(S, st, S.band, band); }
+} else if (window.VizPanels) {
+window.VizPanels.draw(S, st);
+}
+return S;
+}
+
+return {
+T: T, THEME: T, FONT: FONT, render: render, fitCanvas: fitCanvas,
+txt: txt, line: line, arrow: arrow, dot: dot, pathPts: pathPts, dimLine: dimLine,
+panel: panel, hull: hull, rgba: rgba, fnt: fnt, clamp: clamp,
+geom: geom, projOf: projOf, ringPts: ringPts, chainLines: chainLines
+};
+})();
+
+
+
+window.VizPanels = (function () {
+'use strict';
+var P = window.VizPhys;
+var R = null;
+function r() { R = R || window.VizRender; return R; }
+function T() { return r().T; }
+function rgba(h, a) { return r().rgba(h, a); }
+function txt() { return r().txt.apply(null, arguments); }
+function line() { return r().line.apply(null, arguments); }
+function arrow() { return r().arrow.apply(null, arguments); }
+function dot() { return r().dot.apply(null, arguments); }
+function panel() { return r().panel.apply(null, arguments); }
+function fnt(sz, w) { return r().fnt(sz, w); }
+
+var PAD = 16, TOP = 64;
+
+function para(ctx, x, y, w, s, color, size, lh, weight, maxLines) {
+ctx.save();
+ctx.font = fnt(size, weight); ctx.fillStyle = color;
+ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+var ln = '', yy = y, i, ch, lines = 0;
+var cap = maxLines || 99;
+for (i = 0; i < s.length; i++) {
+ch = s.charAt(i);
+if (ctx.measureText(ln + ch).width > w && ln.length) {
+if (lines >= cap - 1) { ctx.fillText(ln.slice(0, Math.max(1, ln.length - 1)) + '…', x, yy); ctx.restore(); return yy + lh; }
+ctx.fillText(ln, x, yy); ln = ch; yy += lh; lines++;
+} else { ln += ch; }
+}
+if (ln && lines < cap) { ctx.fillText(ln, x, yy); yy += lh; }
+ctx.restore();
+return yy;
+}
+function head(ctx, W, cn, en) {
+txt(ctx, 18, 20, cn, T().white, 15, 'left', 600);
+txt(ctx, 18, 40, en, rgba(T().grey, 0.9), 11, 'left');
+}
+function rule(ctx, x, y, w, color) { line(ctx, { x: x, y: y }, { x: x + w, y: y }, color || rgba(T().white, 0.16), 1); }
+function card(ctx, x, y, w, h, stroke, fill) { panel(ctx, x, y, w, h, stroke || rgba(T().white, 0.22), fill); return { x: x, y: y, w: w, h: h }; }
+function foot(ctx, H, s, cmp) {
+if (H - 12 > 0) { txt(ctx, PAD, H - 12, s, rgba(T().white, 0.55), cmp ? 10.5 : 11.5); }
+}
+
+function bandUnits(S, st, band) {
+var ctx = S.ctx, cmp = S.W < 620, y = band.y + 4;
+txt(ctx, band.x + 4, y + 10, '三条变形，同一个事实：过截面的电荷量 ÷ 时间', T().yellow, cmp ? 12 : 13, 'left', 600);
+var cw = (band.w - 24) / 3, i, eq = ['I = Q / t', 'Q = I · t', 't = Q / I'];
+var val = [P.fx(st.I, 3) + ' A', P.fx(st.I * st.t, 3) + ' C', P.fx(st.t, 2) + ' s'];
+if (cmp) {
+cw = band.w - 8;
+for (i = 0; i < 3; i++) {
+var c0 = card(ctx, band.x + 4, y + 22 + i * 26, cw, 24);
+txt(ctx, c0.x + 8, c0.y + 12, eq[i] + '  =  ' + val[i], i === 0 ? T().yellow : T().white, 12, 'left', 700);
+}
+txt(ctx, band.x + 4, y + 108, '1 A = 1 C/s = 10³ mA = 10⁶ µA', rgba(T().white, 0.68), 11, 'left');
+} else {
+for (i = 0; i < 3; i++) {
+var c = card(ctx, band.x + i * (cw + 12), y + 24, cw, 40, i === 0 ? rgba(T().yellow, 0.55) : null);
+txt(ctx, c.x + 10, c.y + 13, eq[i], i === 0 ? T().yellow : T().white, 13.5, 'left', 700);
+txt(ctx, c.x + 10, c.y + 29, '= ' + val[i], rgba(T().white, 0.72), 12, 'left');
+}
+txt(ctx, band.x + 4, y + 80, '1 A = 1 C/s = 10³ mA = 10⁶ µA　｜　单位：A（安培），电荷量 C，时间 s', rgba(T().white, 0.68), 12, 'left');
+txt(ctx, band.x + 4, y + 100, st.carrier === 'pos'
+? '本屏载流子：正电荷 —— 白箭头（电流方向）与它们相同。'
+: '本屏载流子：自由电子（负电荷）—— 白箭头是电流 I 的方向，与电子运动方向相反。',
+rgba(T().grey, 1), 11.5, 'left');
+}
+}
+
+function bandFour(S, st, band) {
+var ctx = S.ctx, cmp = S.W < 620, i;
+var items = [
+['n', '数密度', P.sci(st.n, 2) + ' /m³'],
+['q', '单个电荷量', P.sci(st.q, 2) + ' C'],
+['S', '横截面积', P.fx(st.S * 1e6, 2) + ' mm²'],
+['v', '定向速率', P.fx(st.v * 1e3, 4) + ' mm/s']
+];
+if (cmp) {
+var cw2 = (band.w - 3 * 6) / 4;
+for (i = 0; i < 4; i++) {
+var c2 = card(ctx, band.x + i * (cw2 + 6), band.y + 4, cw2, band.h - 10);
+txt(ctx, c2.x + c2.w / 2, c2.y + 18, items[i][0], T().yellow, 15, 'center', 700);
+txt(ctx, c2.x + c2.w / 2, c2.y + 38, items[i][1], rgba(T().white, 0.6), 9.5, 'center');
+txt(ctx, c2.x + c2.w / 2, c2.y + 60, items[i][2], T().white, 10.5, 'center', 700);
+}
+return;
+}
+var cw = (band.w - 3 * 10) / 4;
+for (i = 0; i < 4; i++) {
+var c = card(ctx, band.x + i * (cw + 10), band.y + 2, cw, band.h - 8);
+txt(ctx, c.x + 12, c.y + 20, items[i][0], T().yellow, 19, 'left', 700);
+txt(ctx, c.x + 34, c.y + 20, items[i][1], rgba(T().white, 0.7), 11.5);
+txt(ctx, c.x + 12, c.y + 46, items[i][2], T().white, 13.5, 'left', 700);
+}
+}
+
+function miniWire(ctx, x, y, w, h, st) {
+
+var x0 = x, x1 = x + w, ya = y, yb = y + h;
+line(ctx, { x: x0, y: ya }, { x: x1, y: ya }, rgba(T().white, 0.5), 1.4);
+line(ctx, { x: x0, y: yb }, { x: x1, y: yb }, rgba(T().white, 0.5), 1.4);
+var gx = x0 + w * 0.62;
+line(ctx, { x: gx, y: ya - 6 }, { x: gx, y: yb + 6 }, T().yellow, 2.6);
+var i, k, sp = w / 18;
+for (k = 0; k < 18; k++) {
+var wx = x0 + ((k * sp + st.v * st.t * 2.2) % (w - 6));
+dot(ctx, { x: wx, y: (ya + yb) / 2 + ((k % 3) - 1) * (h / 3) }, 2.2, T().blue, 0.9);
+}
+return gx;
+}
+
+function sceneDuel(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640;
+var colW = cmp ? W - 2 * PAD : (W - 3 * PAD) / 2;
+var top = TOP, colH = cmp ? (H - top - 26) / 2 - 6 : H - top - 30;
+var Idef = P.Idef(P.barrelCharge(st.n, st.q, st.S, st.v, st.t), st.t);
+var Imic = P.Imic(st.n, st.q, st.S, st.v);
+head(ctx, W, '两条路，同一个电流', 'definition path  vs  microscopic path');
+var x1 = PAD, y1 = top, x2 = cmp ? PAD : PAD * 2 + colW, y2 = cmp ? top + colH + 12 : top;
+
+var c1 = card(ctx, x1, y1, colW, colH, rgba(T().yellow, 0.5));
+txt(ctx, x1 + 12, y1 + 18, '① 定义式：用表量，数过截面的电荷量', T().yellow, cmp ? 12 : 13, 'left', 700);
+var wtop = y1 + 34, wh = Math.min(cmp ? 54 : 74, colH * 0.30);
+var gx = miniWire(ctx, x1 + 16, wtop, colW - 32, wh, st);
+txt(ctx, gx + 6, wtop - 12, '横截面', T().yellow, 11, 'left', 600);
+var ry = wtop + wh + 26;
+var rows = [
+['t（这段时间）', P.fx(st.t, 2) + ' s'],
+['Q（过截面的电荷量）', P.fx(P.barrelCharge(st.n, st.q, st.S, st.v, st.t), 3) + ' C'],
+['I = Q / t', P.fx(Idef, 4) + ' A']
+];
+for (var i = 0; i < rows.length; i++) {
+txt(ctx, x1 + 14, ry + i * 21, rows[i][0], rgba(T().white, 0.62), cmp ? 11 : 12);
+txt(ctx, x1 + colW - 14, ry + i * 21, rows[i][1], i === 2 ? T().yellow : T().white, cmp ? 12.5 : 14, 'right', 700);
+}
+
+var c2 = card(ctx, x2, y2, colW, colH, rgba(T().blue, 0.5));
+txt(ctx, x2 + 12, y2 + 18, '② 微观式：数清导体内部的量，直接算', T().blue, cmp ? 12 : 13, 'left', 700);
+var rows2 = [
+['n（数密度）', P.sci(st.n, 2) + ' /m³'],
+['q（单个电荷量）', P.sci(st.q, 2) + ' C'],
+['S（横截面积）', P.fx(st.S * 1e6, 2) + ' mm²'],
+['v（定向速率）', P.fx(st.v * 1e3, 4) + ' mm/s'],
+['I = n·q·S·v', P.fx(Imic, 4) + ' A']
+];
+var ry2 = y2 + 44, gap2 = Math.min(26, (colH - 60) / 5);
+for (i = 0; i < rows2.length; i++) {
+txt(ctx, x2 + 14, ry2 + i * gap2, rows2[i][0], rgba(T().white, 0.62), cmp ? 11 : 12);
+txt(ctx, x2 + colW - 14, ry2 + i * gap2, rows2[i][1], i === 4 ? T().blue : T().white, cmp ? 12.5 : 14, 'right', 700);
+}
+
+var diff = Math.abs(Idef - Imic), rel = Math.max(Idef, Imic) > 0 ? diff / Math.max(Idef, Imic) : 0;
+if (cmp) {
+txt(ctx, PAD, top + 2 * colH + 20, P.fx(Idef, 4) + ' A = ' + P.fx(Imic, 4) + ' A　（差 ' + P.fx(rel * 100, 6) + '%）',
+T().yellow, 12, 'left', 700);
+} else {
+txt(ctx, x1 + colW + PAD / 2, top + colH / 2 - 26, '=', T().yellow, 32, 'center', 700);
+txt(ctx, x1 + colW + PAD / 2, top + colH / 2 + 14, '相对差', rgba(T().white, 0.55), 11, 'center');
+txt(ctx, x1 + colW + PAD / 2, top + colH / 2 + 32, P.fx(rel * 100, 6) + '%', T().yellow, 12, 'center', 700);
+}
+foot(ctx, H, '拖 v、n、S 任一个，两边同时变，差始终是 0 —— 微观式不是另一条规律，它就是定义式的微观版', cmp);
+}
+
+function sceneTwoQ(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640;
+head(ctx, W, '同一个字母 q，两个不同的量', 'the symbol overload');
+var Qtot = P.barrelCharge(st.n, st.q, st.S, st.v, st.t);
+var pick = st.qPick || 'none';
+var w = W - 2 * PAD, h = (H - TOP - 30) / 2 - 6;
+var fs = cmp ? 11 : 12.5, lh = cmp ? 17 : 19;
+
+var maxL = Math.max(1, Math.floor((h - 44 - 46) / lh));
+var c1 = card(ctx, PAD, TOP, w, h, pick === 'def' ? T().yellow : rgba(T().yellow, 0.45),
+pick === 'def' ? rgba(T().yellow, 0.06) : null);
+var c2 = card(ctx, PAD, TOP + h + 12, w, h, pick === 'mic' ? T().blue : rgba(T().blue, 0.45),
+pick === 'mic' ? rgba(T().blue, 0.06) : null);
+txt(ctx, PAD + 14, c1.y + 20, '定义式里的 q —— 其实是“这段时间过截面的全部电荷量”', T().yellow, cmp ? 11.5 : 13.5, 'left', 700);
+para(ctx, PAD + 14, c1.y + 44, w - 28, '它是一堆电荷的总和，单位 C，随你取的这段时间长短而变。为了不和另一个 q 打架，本课把它写成大写 Q。',
+rgba(T().white, 0.78), fs, lh, 400, maxL);
+txt(ctx, PAD + 14, c1.y + h - 42, '本屏：Q = ' + P.fx(Qtot, 3) + ' C', T().yellow, cmp ? 12.5 : 15, 'left', 700);
+txt(ctx, PAD + 14, c1.y + h - 20, '量级：１ C 上下（1 A × 1 s）', rgba(T().grey, 1), cmp ? 10.5 : 12);
+txt(ctx, PAD + 14, c2.y + 20, '微观式里的 q —— 是“一个”自由电荷的电荷量', T().blue, cmp ? 11.5 : 13.5, 'left', 700);
+para(ctx, PAD + 14, c2.y + 44, w - 28, '它由材料决定，对金属就是元电荷 e = 1.602×10⁻¹⁹ C，跟你取多长的时间毫无关系。',
+rgba(T().white, 0.78), fs, lh, 400, maxL);
+txt(ctx, PAD + 14, c2.y + h - 42, '本屏：q = ' + P.sci(st.q, 3) + ' C', T().blue, cmp ? 12.5 : 15, 'left', 700);
+txt(ctx, PAD + 14, c2.y + h - 20, '量级：10⁻¹⁹ C —— 小数点后第 19 位', rgba(T().grey, 1), cmp ? 10.5 : 12);
+if (!cmp) {
+txt(ctx, W - PAD - 14, c1.y + h - 42, '相差 ' + P.sci(Qtot / st.q, 2) + ' 倍', T().yellow, 14, 'right', 700);
+txt(ctx, W - PAD - 14, c1.y + h - 20, '把两者混用，答案会离谱到无法读', rgba(T().white, 0.6), 12, 'right');
+}
+foot(ctx, H, '底栏点「看定义式的 Q」「看微观式的 q」，卡片会亮起来', cmp);
+}
+
+function sceneMisuse(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640, y = TOP;
+head(ctx, W, '把两个 q 混用，会算出什么', 'what if you plug Q in as q');
+var Qtot = P.barrelCharge(st.n, st.q, st.S, st.v, st.t);
+var Iok = P.Imic(st.n, st.q, st.S, st.v);
+var Ibad = P.Imic(st.n, Qtot, st.S, st.v);
+txt(ctx, PAD, y, '正确：I = n · q · S · v', T().blue, cmp ? 12.5 : 14, 'left', 700); y += 22;
+y = para(ctx, PAD, y, W - 2 * PAD, '= ' + P.sci(st.n, 2) + ' × ' + P.sci(st.q, 2) + ' × ' + P.fx(st.S * 1e6, 2) + '×10⁻⁶ m² × ' + P.fx(st.v * 1e3, 4) + '×10⁻³ m/s = ' + P.fx(Iok, 3) + ' A',
+rgba(T().white, 0.78), cmp ? 11 : 12.5, 18); y += 16;
+txt(ctx, PAD, y, '错误：把“总电荷量 Q”当成“单个电荷量 q”代进去', T().red, cmp ? 12.5 : 14, 'left', 700); y += 22;
+y = para(ctx, PAD, y, W - 2 * PAD, 'I = n · Q · S · v = ' + P.sci(Ibad, 2) + ' A',
+rgba(T().red, 0.92), cmp ? 11 : 12.5, 18); y += 22;
+
+var barY = H - (cmp ? 156 : 172);
+if (barY < y + 10) { barY = y + 10; }
+var labW = cmp ? 66 : 74, barw = W - 2 * PAD - labW - 60;
+var xb = PAD + labW;
+var logs = [Math.log10(Math.max(1e-3, Iok)), Math.log10(Ibad)];
+var lmax = logs[1] + 0.5, lmin = logs[0] - 0.5;
+var xx = function (L) { return xb + (L - lmin) / (lmax - lmin) * barw; };
+line(ctx, { x: xb, y: barY + 62 }, { x: xb + barw, y: barY + 62 }, rgba(T().white, 0.3), 1.2);
+for (var k = 0; k <= 5; k++) {
+var Lv = lmin + (lmax - lmin) * k / 5;
+line(ctx, { x: xx(Lv), y: barY + 58 }, { x: xx(Lv), y: barY + 66 }, rgba(T().white, 0.3), 1.2);
+txt(ctx, xx(Lv), barY + 78, '10' + P.sup(Math.round(Lv)), rgba(T().grey, 1), 10.5, 'center');
+}
+panel(ctx, xb, barY + 6, Math.max(3, xx(logs[0]) - xb), 18, null, rgba(T().blue, 0.55));
+txt(ctx, xb - 8, barY + 15, '正确值', T().blue, cmp ? 11 : 12, 'right', 700);
+txt(ctx, xx(logs[0]) + 8, barY + 15, P.fx(Iok, 3) + ' A', T().blue, cmp ? 11.5 : 13, 'left', 700);
+panel(ctx, xb, barY + 34, Math.max(3, xx(logs[1]) - xb), 18, null, rgba(T().red, 0.55));
+txt(ctx, xb - 8, barY + 43, '混用值', T().red, cmp ? 11 : 12, 'right', 700);
+txt(ctx, Math.min(W - PAD, xx(logs[1]) + 8), barY + 43, P.sci(Ibad, 2) + ' A', T().red, cmp ? 11.5 : 13, 'left', 700);
+txt(ctx, PAD, barY + 104, '放大倍数 = Q / q = ' + P.sci(Qtot / st.q, 2), rgba(T().white, 0.75), cmp ? 11 : 12.5);
+txt(ctx, PAD, barY + 128, '这就是两条公式“看起来打架”的全部原因 —— 不是规律错了，是字母重名。',
+T().yellow, cmp ? 11.5 : 13, 'left', 600);
+foot(ctx, H, '拖「时间 t」改变总电荷量 Q，看错误值跟着疯长', cmp);
+}
+
+function sceneDim(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 620, y = TOP;
+head(ctx, W, '量纲自检：右边乘出来只能是 A', 'dimensional check');
+var items = [['n', 'm⁻³'], ['q', 'C'], ['S', 'm²'], ['v', 'm·s⁻¹']];
+var cw = cmp ? (W - 2 * PAD - 3 * 6) / 4 : Math.min(150, (W - 2 * PAD) / 5.4);
+for (var i = 0; i < 4; i++) {
+var x = PAD + i * (cw + 6);
+panel(ctx, x, y, cw, 58, rgba(T().white, 0.3));
+txt(ctx, x + cw / 2, y + 19, items[i][0], T().white, cmp ? 15 : 18, 'center', 700);
+txt(ctx, x + cw / 2, y + 42, items[i][1], rgba(T().white, 0.75), cmp ? 11 : 12.5, 'center');
+if (i < 3) { txt(ctx, x + cw + 3, y + 29, '×', rgba(T().white, 0.6), 13, 'center'); }
+}
+y += 80;
+txt(ctx, PAD, y, 'm⁻³ · C · m² · m·s⁻¹ = C · s⁻¹ = A', T().yellow, cmp ? 14 : 17, 'left', 700); y += 30;
+y = para(ctx, PAD, y, W - 2 * PAD, '把 n、q、S、v 的量纲按顺序乘一遍：m⁻³ 与 m² 先约掉一个 m⁻²，再乘 m·s⁻¹ 得到 s⁻¹，最后乘 C —— 结果恰好是 C/s，也就是安培。量纲对上了，说明式子在结构上不可能错。',
+rgba(T().white, 0.78), cmp ? 11 : 12.5, 20); y += 14;
+para(ctx, PAD, y, W - 2 * PAD, '反过来再看定义式 I = Q/t：C ÷ s = C/s = A，同样对上。两条公式给出同一个单位，说明它们描述的是同一个物理量，只是走的路不同。',
+rgba(T().white, 0.62), cmp ? 11 : 12, 20);
+foot(ctx, H, '量纲只能排除错误，不能证明正确 —— 但本课两式的数值对账已经把“正确”钉死了', cmp);
+}
+
+function sceneReal(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640, y = TOP;
+head(ctx, W, 'v 到底有多慢：铜导线里的真实数字', 'how slow is the drift really');
+var n = P.numberDensity(st.mat);
+var v = P.driftSpeed(st.I, n, st.q, st.S);
+var names = ['cu', 'ag', 'al'], cw = (W - 2 * PAD - 20) / 3, i;
+for (i = 0; i < 3; i++) {
+var on = names[i] === st.mat;
+var c = card(ctx, PAD + i * (cw + 10), y, cw, 42, on ? T().yellow : rgba(T().white, 0.25), on ? rgba(T().yellow, 0.08) : null);
+txt(ctx, c.x + c.w / 2, c.y + 14, P.MAT[names[i]].name, on ? T().yellow : rgba(T().white, 0.75), cmp ? 12 : 13, 'center', on ? 700 : 400);
+txt(ctx, c.x + c.w / 2, c.y + 31, 'n = ' + P.sci(P.numberDensity(names[i]), 2), on ? T().yellow : rgba(T().white, 0.6), cmp ? 9.5 : 11, 'center');
+}
+y += 60;
+txt(ctx, PAD, y, 'v = I / (n · q · S)', T().yellow, cmp ? 13 : 15, 'left', 700); y += 24;
+txt(ctx, PAD, y, '= ' + P.fx(st.I, 2) + ' ÷ (' + P.sci(n, 2) + ' × ' + P.sci(st.q, 2) + ' × ' + P.fx(st.S * 1e6, 2) + '×10⁻⁶)', rgba(T().white, 0.8), cmp ? 11 : 12.5); y += 26;
+txt(ctx, PAD, y, 'v = ' + P.fx(v * 1e3, 4) + ' mm/s', T().yellow, cmp ? 17 : 22, 'left', 700);
+txt(ctx, PAD + (cmp ? 170 : 250), y + 3, '≈ ' + P.fx(v * 1e6, 1) + ' µm/s', rgba(T().white, 0.7), cmp ? 11 : 12.5);
+y += 34;
+var ry = Math.min(y + 14, H - 96);
+var dia = 2 * P.radiusOf(st.S), stepL = v * 1.0;
+var rw = W - 2 * PAD;
+var sc = rw / (dia * 1.15);
+txt(ctx, PAD, ry - 14, '一把尺子：导线直径 ' + P.fx(dia * 1e3, 2) + ' mm（横条按此缩放）', rgba(T().white, 0.6), cmp ? 11 : 12);
+line(ctx, { x: PAD, y: ry + 12 }, { x: PAD + rw, y: ry + 12 }, rgba(T().white, 0.35), 1.4);
+line(ctx, { x: PAD + rw, y: ry + 2 }, { x: PAD + rw, y: ry + 22 }, rgba(T().white, 0.55), 2);
+txt(ctx, PAD + rw, ry + 34, P.fx(dia * 1e3, 2) + ' mm', rgba(T().white, 0.6), 11, 'right');
+var w1 = Math.max(3, stepL * sc);
+panel(ctx, PAD, ry + 5, w1, 14, null, T().yellow);
+txt(ctx, Math.min(PAD + w1 + 8, W - PAD - 190), ry + 12, '1 s 内电子只走 ' + P.fx(stepL * 1e3, 3) + ' mm', T().yellow, cmp ? 11 : 12.5, 'left', 700);
+foot(ctx, H, '拖「电流 I」：电流越大，v 越大 —— 但 v 永远只有 mm/s 的量级', cmp);
+}
+
+function sceneTimeline(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640, pad = 16;
+head(ctx, W, '为什么一合闸灯就亮？两个速度差 10¹² 倍', 'field vs electrons');
+var n = P.numberDensity(st.mat || 'cu'), v = P.driftSpeed(st.I, n, st.q, st.S);
+var tE = P.travelTime(1, v), tF = P.travelTime(1, 2.998e8);
+var ax = H - (cmp ? 116 : 106);
+var y = TOP;
+txt(ctx, pad, y, '两种“速度”量在同一条时间轴上（对数刻度）', rgba(T().white, 0.72), cmp ? 11.5 : 13, 'left', 600);
+y += 24;
+if (ax - 104 - y > 38) {
+para(ctx, pad, y, W - 2 * pad,
+'电子自己是爬的：按 v = ' + P.fx(v * 1e3, 4) + ' mm/s，走完 1 m 要 ' + P.dur(tE) +
+'。合上开关时，电场沿导线以近光速建立，导线里各处的电子几乎同时开始定向移动 —— 所以灯立刻就亮。',
+rgba(T().white, 0.78), cmp ? 11 : 12.5, 19);
+}
+var lo = -9, hi = 5.2;
+var x0 = pad + (cmp ? 2 : 16), x1 = W - pad - (cmp ? 2 : 16);
+var xx = function (sec) { return x0 + (Math.log10(sec) - lo) / (hi - lo) * (x1 - x0); };
+line(ctx, { x: x0, y: ax }, { x: x1, y: ax }, rgba(T().white, 0.5), 1.4);
+var marks = [[-9, '1 ns'], [-6, '1 µs'], [-3, '1 ms'], [0, '1 s'], [1.78, '1 min'], [2.56, '1 h'], [3.94, '1 天']];
+for (var i = 0; i < marks.length; i++) {
+var mx = xx(Math.pow(10, marks[i][0]));
+line(ctx, { x: mx, y: ax - 5 }, { x: mx, y: ax + 5 }, rgba(T().white, 0.35), 1.2);
+txt(ctx, mx, ax + 17, marks[i][1], rgba(T().grey, 1), cmp ? 9.5 : 10.5, 'center');
+}
+
+var xf = xx(tF);
+line(ctx, { x: xf, y: ax }, { x: xf, y: ax - 66 }, rgba(T().blue, 0.5), 1.2, [4, 4]);
+dot(ctx, { x: xf, y: ax }, 5, T().blue, 1, 8);
+var fx = Math.max(xf, 6), fAl = (xf < 110) ? 'left' : 'center';
+txt(ctx, fx, ax - 92, '电场前沿穿过 1 m：' + P.dur(tF), T().blue, cmp ? 11 : 12.5, fAl, 700);
+txt(ctx, fx, ax - 74, '“开关一合，全线立刻有电流”', rgba(T().blue, 0.8), cmp ? 9.5 : 11, fAl);
+
+var xe = xx(tE);
+line(ctx, { x: xe, y: ax }, { x: xe, y: ax + 44 }, rgba(T().yellow, 0.5), 1.2, [4, 4]);
+dot(ctx, { x: xe, y: ax }, 5, T().yellow, 1, 8);
+var ex = Math.min(xe, W - 6), eAl = (xe > W - 120) ? 'right' : 'center';
+txt(ctx, ex, ax + 60, '某个电子爬完 1 m：' + P.dur(tE), T().yellow, cmp ? 11 : 12.5, eAl, 700);
+foot(ctx, H, '拖「电流 I」：电子这条会横向移动，电场那条纹丝不动', cmp);
+}
+
+function sceneAverage(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640, pad = 16;
+head(ctx, W, '电流不是恒定的时候，I = Q/t 给的是平均值', 'when I is not steady');
+var tmax = st.t;
+var Q = P.waveQ(tmax, 600), avg = P.waveAvg(tmax, 600);
+var y = TOP;
+var h = Math.max(80, Math.min(H * 0.32, H - y - 168));
+var x0 = pad + (cmp ? 40 : 60), w = W - x0 - pad - 26, y0 = y + h + 14;
+var Imax = 2.0;
+var px = function (t) { return x0 + t / 6 * w; };
+var py = function (I) { return y0 - I / Imax * h; };
+txt(ctx, pad, y - 6, 'I / A', rgba(T().grey, 1), 11, 'left');
+line(ctx, { x: x0, y: y0 }, { x: x0 + w, y: y0 }, rgba(T().white, 0.5), 1.4);
+line(ctx, { x: x0, y: y0 }, { x: x0, y: y0 - h }, rgba(T().white, 0.5), 1.4);
+txt(ctx, x0 - 7, y0, '0', T().grey, 11, 'right');
+txt(ctx, x0 - 7, y0 - h, '2.0', T().grey, 11, 'right');
+txt(ctx, x0 + w, y0 + 14, 't / s', T().grey, 11, 'right');
+var i, N = 240;
+ctx.save();
+ctx.beginPath();
+for (i = 0; i <= N; i++) {
+var tt = i / N * tmax;
+if (i === 0) { ctx.moveTo(px(tt), y0); }
+ctx.lineTo(px(tt), py(P.waveI(tt)));
+}
+if (tmax > 0) { ctx.lineTo(px(tmax), y0); ctx.closePath(); }
+ctx.fillStyle = rgba(T().yellow, 0.18); ctx.fill();
+ctx.restore();
+ctx.save();
+ctx.beginPath();
+for (i = 0; i <= N; i++) {
+var t2 = i / N * tmax;
+if (i === 0) { ctx.moveTo(px(t2), py(P.waveI(t2))); } else { ctx.lineTo(px(t2), py(P.waveI(t2))); }
+}
+ctx.strokeStyle = T().white; ctx.lineWidth = 2.2; ctx.stroke();
+ctx.restore();
+var yA = py(avg);
+line(ctx, { x: x0, y: yA }, { x: px(tmax), y: yA }, T().yellow, 2.4, [7, 4]);
+txt(ctx, px(tmax) + 4, yA, 'Ī', T().yellow, 13, 'left', 700);
+var yy = y0 + 34;
+txt(ctx, pad, yy, '阴影面积 = 这段时间通过横截面的电荷量 Q = ' + P.fx(Q, 3) + ' C', T().yellow, cmp ? 11.5 : 13, 'left', 700);
+yy += 24;
+txt(ctx, pad, yy, '平均电流 Ī = Q / t = ' + P.fx(Q, 3) + ' C ÷ ' + P.fx(tmax, 2) + ' s = ' + P.fx(avg, 4) + ' A', rgba(T().white, 0.85), cmp ? 11.5 : 13);
+yy += 26;
+para(ctx, pad, yy, W - 2 * pad, '定义式 I = Q/t 对任何情况都成立：电流恒定时它给出那个恒定的值；电流变化时，它给出这段时间的平均值。教材算“某段时间内通过横截面的电荷量”用的就是它。',
+rgba(T().white, 0.68), cmp ? 11 : 12, 19);
+foot(ctx, H, '拖「时间 t」截取不同长度的时间段，看 Ī 跟着变', cmp);
+}
+
+function sceneSummary(S, st) {
+var ctx = S.ctx, W = S.W, H = S.H, cmp = W < 640, pad = 16, y = TOP;
+head(ctx, W, '一张卡片带走', 'summary');
+var w = W - 2 * pad;
+var h = (H - y - 34) / 2 - 6;
+var rows = [
+['定义式', 'I = Q / t', 'Q 是 t 内通过横截面的全部电荷量；比值定义，对任何导体、任何载流子都成立',
+'单位为 A = C/s；变化电流时给的是平均值', T().yellow],
+['微观表达式', 'I = n q S v', 'n 数密度、q 单个电荷量、S 横截面积、v 定向速率；由定义式 + 柱体模型推出',
+'适用于自由电荷以统一定向速率移动的导体（金属写 I = n e S v）', T().blue]
+];
+for (var i = 0; i < 2; i++) {
+var c = card(ctx, pad, y + i * (h + 12), w, h, rgba(rows[i][4], 0.45));
+txt(ctx, c.x + 14, c.y + 20, rows[i][0], rgba(T().white, 0.65), cmp ? 11 : 12);
+txt(ctx, c.x + 14, c.y + 48, rows[i][1], rows[i][4], cmp ? 17 : 21, 'left', 700);
+para(ctx, c.x + 14, c.y + 80, c.w - 28, rows[i][2], rgba(T().white, 0.8), cmp ? 11 : 12.5, 20);
+txt(ctx, c.x + 14, c.y + c.h - 18, rows[i][3], rgba(T().white, 0.55), cmp ? 10.5 : 11.5);
+}
+foot(ctx, H, '两条式子不是并列的两个规律：微观式是定义式在“柱体模型”下的必然结果 —— 数值对账恒为 0', cmp);
+}
+
+function draw(S, st) {
+switch (st.scene) {
+case 'duel': sceneDuel(S, st); break;
+case 'twoq': sceneTwoQ(S, st); break;
+case 'misuse': sceneMisuse(S, st); break;
+case 'dim': sceneDim(S, st); break;
+case 'real': sceneReal(S, st); break;
+case 'timeline': sceneTimeline(S, st); break;
+case 'average': sceneAverage(S, st); break;
+case 'summary': sceneSummary(S, st); break;
+default: break;
+}
+}
+function band(S, st, bandArea, kind) {
+if (kind === 'units') { bandUnits(S, st, bandArea); }
+else if (kind === 'four') { bandFour(S, st, bandArea); }
+}
+
+return { draw: draw, band: band };
+})();
+
+
+
+window.VizSteps = (function () {
+'use strict';
+var P = window.VizPhys;
+var CU = function () { return P.numberDensity('cu'); };
+var V0 = 7.35e-5;
+
+function base() {
+return {
+step: 0, act: '', title: '', hint: '', note: '', note2: '', formula: '',
+allow: {}, rng: {},
+n: CU(), q: P.QE, S: 1e-6, v: V0, I: 1.0,
+t: 6, mat: 'cu', carrier: 'neg', qPick: 'none',
+scene: 'wire', mode: '3d',
+view: { az: 0.36, el: 0.16, zoom: 1 },
+show: { band: 'none', barrel: false, section: true, arrow: true, dim: false, iArrow: false, chain: 0 }
+};
+}
+function syncI(st) { st.v = P.driftSpeed(st.I, st.n, st.q, st.S); }
+function syncV(st) { st.I = P.Imic(st.n, st.q, st.S, st.v); }
+
+var A1 = '第一幕 · 定义式', A2 = '第二幕 · 微观式', A3 = '第三幕 · 两式对账',
+A4 = '第四幕 · 真实量级', A5 = '第五幕 · 小结';
+
+var STEPS = [
+
+{
+act: A1, title: '通电导体：数一数过了截面的电荷量',
+hint: '拖 <b>「时间 t」</b>——电荷往右爬，每越过横截面的电荷量都记在右边的 Q 上；下方那条线的端点跟着走',
+note: '电流的定义：<b>单位时间内通过导体横截面的电荷量</b>。量出 t 内过了多少电荷 Q，比值 Q/t 就是电流。',
+formula: 'I = Q / t　（单位：1 A = 1 C/s）',
+allow: { t: true },
+rng: { t: [0, 20, 0.1] },
+scene: 'wire', mode: '3d',
+show: { band: 'qt', section: true, arrow: true },
+init: function (st) { st.t = 6; st.I = 1.0; syncI(st); }
+},
+{
+act: A1, title: 'Q 和 t 一起变，比值不变 —— 所以它能定义电流',
+hint: '拖 <b>「电流 I」</b>看那条黄线斜率变陡；再拖 <b>「时间 t」</b>读同一个点上的 Q 与 Q/t',
+note: '这就是<b>比值定义法</b>：Q 变、t 变，Q/t 对恒定电流始终是同一个数。注意 I 不是由 Q、t 决定的 —— 它由电压和电阻决定，这里只是把它<b>定义</b>成这个比值。',
+formula: 'I = Q/t = 常数（恒定电流）',
+allow: { t: true, I: true },
+rng: { t: [0, 20, 0.1], I: [0.2, 2.0, 0.05] },
+scene: 'wire', mode: '3d',
+show: { band: 'qt', section: true, arrow: true },
+init: function (st) { st.t = 12; st.I = 1.4; syncI(st); }
+},
+{
+act: A1, title: '三条变形，与“电流方向”的规定',
+hint: '点底栏 <b>「负电荷 / 正电荷」</b>换载流子：电子往右跑时，白色的电流箭头却指向左边',
+note: '三个量知道两个就能求第三个。方向规定：<b>电流方向 = 正电荷定向移动的方向</b>。金属里真正移动的是自由电子（负），所以电流方向与电子运动方向<b>相反</b>；电解液里正负离子同时反向移动，电流方向按正电荷算。',
+note2: '本屏 Q = ',
+formula: 'Q = I·t　　I = Q/t　　t = Q/I',
+allow: { t: true, I: true, carrier: true },
+rng: { t: [0, 20, 0.1], I: [0.2, 2.0, 0.05] },
+scene: 'wire', mode: 'flat',
+show: { band: 'units', section: true, arrow: true, iArrow: true },
+init: function (st) { st.t = 8; st.I = 1.0; st.carrier = 'neg'; syncI(st); }
+},
+
+{
+act: A2, title: '把导体放大：四个微观量 n、q、S、v',
+hint: '拖 <b>「定向速率 v」</b>看电荷跑多快；拖 <b>「数密度 n」</b>看电荷挤多密；拖 <b>「横截面积 S」</b>看导体变粗',
+note: '要找的是一条<b>只用微观量</b>算电流的式子。四个量：<b>n</b> 单位体积里的自由电荷数、<b>q</b> 每个自由电荷的电荷量、<b>S</b> 横截面积、<b>v</b> 定向移动的速率。',
+formula: '要推的式子：I = n q S v',
+allow: { v: true, n: true, S: true },
+rng: { v: [0.01, 0.4, 0.001], n: [1.0, 25, 0.1], S: [0.2, 2.0, 0.02] },
+scene: 'wire', mode: 'flat',
+show: { band: 'four', section: true, arrow: true },
+init: function (st) { st.t = 5; st.v = V0; syncV(st); }
+},
+{
+act: A2, title: '第①步：t 内过截面的电荷，都躺在这根柱子里',
+hint: '拖 <b>「时间 t」</b>看黄色柱子变长；拖 <b>「定向速率 v」</b>看柱长 l = v·t 跟着变',
+note: '盯住横截面看：t 秒内将要越过它的电荷，此刻恰好填满截面<b>后方</b>长 l = v·t 的一根柱子。反过来读也成立 —— 柱子里的电荷，正好在 t 内全部过完。',
+formula: 'l = v·t',
+allow: { t: true, v: true },
+rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+scene: 'wire', mode: 'flat',
+show: { band: 'chain', chain: 2, barrel: true, dim: true, section: true, arrow: true },
+init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+},
+{
+act: A2, title: '第②步：数清这根柱子里有几个电荷',
+hint: '拖 <b>「时间 t」</b>：柱子变胖变长，个数 N 也按同一个比例涨',
+note: '柱体体积 V = S·l = S·v·t。数密度 n 是“每立方米几个”，乘上体积就是个数：N = n·V = n·S·v·t。',
+formula: 'V = S·l = S·v·t　　N = n·V = n·S·v·t',
+allow: { t: true, v: true },
+rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+scene: 'wire', mode: 'flat',
+show: { band: 'chain', chain: 4, barrel: true, dim: true, section: true, arrow: true },
+init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+},
+{
+act: A2, title: '第③步：这些电荷全部过截面，再代回定义式',
+hint: '拖 <b>「时间 t」</b>或 <b>「定向速率 v」</b>，看最后一行 I = nqSv 的值怎么变',
+note: '每个电荷带 q，柱子里 N 个合起来 Q = N·q = n·q·S·v·t；而它们过完截面正好用掉时间 t。代回定义式：<b>I = Q/t = n·q·S·v·t ÷ t = n q S v</b>。t 被约掉了 —— 说明结论跟你取多长的时间无关。',
+formula: 'I = Q/t = nqSvt / t = n q S v',
+allow: { t: true, v: true },
+rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+scene: 'wire', mode: 'flat',
+show: { band: 'chain', chain: 6, barrel: true, dim: true, section: true, arrow: true },
+init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+},
+
+{
+act: A3, title: '两条路并排算一遍：差恒为 0',
+hint: '拖 <b>「定向速率 v」「数密度 n」「横截面积 S」</b>——左右两栏的数字同时变，中间的相对差始终是 0',
+note: '左边走<b>定义式</b>（数出过截面的电荷量 Q，再除以 t），右边走<b>微观式</b>（n·q·S·v）。同一段导体、同一段时间，两条路给出同一个电流。',
+formula: 'I = Q/t　≡　I = n q S v',
+allow: { v: true, n: true, S: true },
+rng: { v: [0.01, 0.4, 0.001], n: [1.0, 25, 0.1], S: [0.2, 2.0, 0.02] },
+scene: 'duel',
+init: function (st) { st.t = 12; st.v = V0; syncV(st); }
+},
+{
+act: A3, title: '症结所在：同一个字母 q，两个不同的量',
+hint: '点底栏 <b>「看定义式的 Q」「看微观式的 q」</b>，上面的卡片会亮起来',
+note: '教材两处都写小写 q，但它们根本不是同一个东西：定义式里的 q 是<b>这段时间里过截面的全部电荷量</b>（本课写成大写 Q，1 C 上下）；微观式里的 q 是<b>一个</b>自由电荷的电荷量（金属里就是元电荷 e = 1.602×10⁻¹⁹ C）。',
+formula: 'I = Q / t　　vs　　I = n·q·S·v',
+allow: { qPick: true },
+scene: 'twoq',
+init: function (st) { st.t = 12; st.v = V0; syncV(st); st.qPick = 'def'; }
+},
+{
+act: A3, title: '混用会怎样：错得离谱',
+hint: '拖 <b>「时间 t」</b>把总电荷量 Q 变大，看错误答案跟着疯长',
+note: '把“总电荷量 Q”当成“单个电荷的电荷量 q”代进微观式，结果会被放大 Q/q 倍 —— 上千万亿倍。真正会算错的人不是不懂公式，是没分清这两个 q。',
+formula: '错：I = n·Q·S·v　（Q 不是单个电荷的电荷量）',
+allow: { t: true },
+rng: { t: [0, 20, 0.1] },
+scene: 'misuse',
+init: function (st) { st.t = 12; st.v = V0; syncV(st); }
+},
+{
+act: A3, title: '再上一道保险：量纲自检',
+hint: '这一步不用拖 —— 看量纲怎么一格一格约成 A',
+note: '把四个量的单位按顺序相乘，最后必须得到 C/s，也就是安培。量纲对不上，式子一定是错的；对上了，只能说结构没错 —— 真正的确认还是上面那次“数值对账”。',
+formula: 'm⁻³ · C · m² · m·s⁻¹ = C·s⁻¹ = A',
+allow: {},
+scene: 'dim',
+init: function (st) {}
+},
+
+{
+act: A4, title: '铜导线里的真实数字：v 有多慢',
+hint: '点 <b>「铜 / 银 / 铝」</b>换材料；拖 <b>「电流 I」</b>看 v = I/(nqS) 跟着变',
+note: '取铜、S = 1 mm²、I = 1 A：n ≈ 8.5×10²⁸ 个/m³，代进去 v ≈ 0.074 mm/s —— 1 秒钟走不到导线直径的十五分之一。',
+formula: 'v = I / (n q S)',
+allow: { mat: true, I: true },
+rng: { I: [0.2, 2.0, 0.05] },
+scene: 'real',
+init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); syncI(st); }
+},
+{
+act: A4, title: '那为什么一合闸灯就亮？两个速度差 10¹² 倍',
+hint: '拖 <b>「电流 I」</b>：电子那条线会左右移动，电场那条纹丝不动',
+note: '电子是靠“爬”的（mm/s 量级，走完 1 m 要几个小时）；合闸时是电场以近光速沿导线建立，导线里各处的电子几乎同时开始定向移动 —— 所以灯立刻就亮。这两个速度完全是两回事。',
+formula: 'v电子 ≈ 10⁻⁴ m/s　　v电场 ≈ 3×10⁸ m/s',
+allow: { I: true },
+rng: { I: [0.2, 2.0, 0.05] },
+scene: 'timeline',
+init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); syncI(st); }
+},
+{
+act: A4, title: '电流变化时，I = Q/t 给的是平均值',
+hint: '拖 <b>「时间 t」</b>截取不同长度的时间段，看虚线 Ī 与阴影面积一起变',
+note: '定义式对任何情况都成立：电流恒定时它给出那个恒定值；电流变化时，它给出这段时间的<b>平均电流</b>。教材里“某段时间内通过横截面的电荷量”算的就是阴影面积。',
+formula: 'Ī = Q / t　（Q 为 t 内通过截面的电荷量）',
+allow: { t: true },
+rng: { t: [0.4, 6, 0.05] },
+scene: 'average',
+init: function (st) { st.t = 3.0; }
+},
+
+{
+act: A5, title: '一张卡片带走',
+hint: '最后一步，不用拖 —— 记住这一句：<b>定义式 + 柱体模型 = 微观表达式</b>',
+note: '两条式子不是并列的两个规律。定义式是“电流是什么”，微观式是“电流由哪些微观量决定”；微观式由定义式加一个柱体模型推出，所以它们永远自洽、不可能打架。',
+formula: 'I = Q/t　→（柱体模型）→　I = n q S v',
+allow: {},
+scene: 'summary',
+init: function (st) {}
+}
+];
+
+function apply(st, i) {
+i = Math.max(0, Math.min(STEPS.length - 1, i));
+var d = STEPS[i], k, b = base();
+for (k in b) { if (Object.prototype.hasOwnProperty.call(b, k)) { st[k] = b[k]; } }
+st.show = { band: 'none', barrel: false, section: true, arrow: true, dim: false, iArrow: false, chain: 0 };
+if (d.init) { d.init(st); }
+st.step = i;
+st.act = d.act; st.title = d.title;
+st.hint = d.hint || ''; st.note = d.note || ''; st.note2 = d.note2 || '';
+st.formula = d.formula || '';
+st.allow = d.allow || {};
+st.rng = d.rng || {};
+st.scene = d.scene || 'wire';
+st.mode = d.mode || '3d';
+var sh = d.show || {};
+for (k in sh) { if (Object.prototype.hasOwnProperty.call(sh, k)) { st.show[k] = sh[k]; } }
+return st;
+}
+
+return { STEPS: STEPS, baseState: base, apply: apply, syncI: syncI, syncV: syncV, V0: V0 };
+})();
+
+
+
+(function () {
+'use strict';
+var P = window.VizPhys, R = window.VizRender, St = window.VizSteps;
+
+var cv = document.getElementById('cv');
+var st = St.baseState();
+var drag = null;
+
+function $(id) { return document.getElementById(id); }
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function show(el, on) { if (el) { el.classList[on ? 'remove' : 'add']('hidden'); } }
+function logMap(u, min, max) { return min * Math.pow(max / min, u / 100); }
+function logInv(v, min, max) { return 100 * Math.log(v / min) / Math.log(max / min); }
+
+function chargeNow() {
+if (st.scene === 'average') { return P.waveQ(st.t, 600); }
+return P.Qof(st.I, st.t);
+}
+function idefNow() { return st.t > 0 ? chargeNow() / st.t : NaN; }
+
+function draw() {
+R.render(cv, st, st.view);
+updatePanel();
+updateControls();
+markToc();
+}
+
+function updatePanel() {
+var Q = chargeNow(), Id = idefNow(), Im = P.Imic(st.n, st.q, st.S, st.v);
+var rel = Math.max(Math.abs(Id), Math.abs(Im)) > 0 ? Math.abs(Id - Im) / Math.max(Math.abs(Id), Math.abs(Im)) : 0;
+$('rdQ').textContent = P.fx(Q, 3) + ' C';
+$('rdT').textContent = P.fx(st.t, 2) + ' s';
+$('rdIdef').textContent = P.fx(Id, 4) + ' A';
+$('rdImic').textContent = P.fx(Im, 4) + ' A';
+$('rdDiff').textContent = (rel * 100).toFixed(6) + ' %';
+$('rdN').textContent = P.sci(st.n, 2) + ' /m³';
+$('rdQq').textContent = P.sci(st.q, 2) + ' C';
+$('rdS').textContent = P.fx(st.S * 1e6, 2) + ' mm²';
+$('rdV').textContent = P.fx(st.v * 1e3, 4) + ' mm/s';
+$('rdFormula').innerHTML = st.formula || '—';
+$('rdNote').innerHTML = st.note || '—';
+}
+
+function setRange(el, rng, unit) {
+el.min = rng[0]; el.max = rng[1]; el.step = rng[2] || 0.1;
+}
+function updateControls() {
+var a = st.allow || {}, rg = st.rng || {};
+show($('wrapT'), !!a.t); show($('wrapI'), !!a.I);
+show($('wrapV'), !!a.v); show($('wrapN'), !!a.n); show($('wrapS'), !!a.S);
+show($('wrapCarrier'), !!a.carrier);
+show($('wrapMat'), !!a.mat);
+show($('wrapPick'), !!a.qPick);
+show($('wrapView'), st.scene === 'wire');
+
+$('stepTitle').textContent = st.title;
+$('actTag').textContent = st.act;
+$('stepSn').textContent = (st.step + 1) + ' / ' + St.STEPS.length;
+$('hint').innerHTML = st.hint || '';
+$('prog').firstElementChild.style.width = ((st.step + 1) / St.STEPS.length * 100) + '%';
+
+if (a.t) {
+setRange($('rgT'), rg.t || [0, 20, 0.1]);
+$('rgT').value = st.t;
+$('lbT').textContent = P.fx(st.t, 2) + ' s';
+}
+if (a.I) {
+setRange($('rgI'), rg.I || [0.2, 2, 0.05]);
+$('rgI').value = st.I;
+$('lbI').textContent = P.fx(st.I, 2) + ' A';
+}
+if (a.v) {
+var rv = rg.v || [0.01, 0.4, 0.001];
+$('rgV').value = logInv(clamp(st.v * 1e3, rv[0], rv[1]), rv[0], rv[1]);
+$('lbV').textContent = P.fx(st.v * 1e3, 4) + ' mm/s';
+}
+if (a.n) {
+var rn = rg.n || [1, 25, 0.1];
+$('rgN').value = logInv(clamp(st.n / 1e28, rn[0], rn[1]), rn[0], rn[1]);
+$('lbN').textContent = P.sci(st.n, 2);
+}
+if (a.S) {
+setRange($('rgS'), rg.S || [0.2, 2, 0.02]);
+$('rgS').value = st.S * 1e6;
+$('lbS').textContent = P.fx(st.S * 1e6, 2) + ' mm²';
+}
+markGroup('#wrapCarrier', 'carrier', st.carrier);
+markGroup('#wrapMat', 'mat', st.mat);
+markGroup('#wrapPick', 'pick', st.qPick);
+var vb = document.querySelectorAll('#wrapView button');
+for (var i = 0; i < vb.length; i++) {
+var k = vb[i].getAttribute('data-view');
+vb[i].className = ((k === 'flat' && st.mode === 'flat') || (k === 'solid' && st.mode === '3d')) ? 'on' : '';
+}
+}
+function markGroup(sel, attr, val) {
+var bs = document.querySelectorAll(sel + ' button');
+for (var i = 0; i < bs.length; i++) {
+bs[i].className = (bs[i].getAttribute('data-' + attr) === val) ? 'on' : '';
+}
+}
+
+function go(i) { St.apply(st, i); draw(); }
+function next() { go(st.step + 1); }
+function prev() { go(st.step - 1); }
+function resetStep() { go(st.step); }
+
+$('btnNext').addEventListener('click', next);
+$('btnPrev').addEventListener('click', prev);
+$('btnReset').addEventListener('click', resetStep);
+$('prog').addEventListener('click', function (ev) {
+var r = this.getBoundingClientRect();
+var f = clamp((ev.clientX - r.left) / r.width, 0, 0.999);
+go(Math.floor(f * St.STEPS.length));
+});
+(function ticks() {
+var bar = $('prog');
+for (var i = 1; i < St.STEPS.length; i++) {
+var u = document.createElement('u');
+u.style.left = (i / St.STEPS.length * 100) + '%';
+bar.appendChild(u);
+}
+})();
+document.addEventListener('keydown', function (ev) {
+if (ev.key === 'ArrowRight' || ev.key === 'PageDown' || ev.key === ' ') { next(); ev.preventDefault(); }
+else if (ev.key === 'ArrowLeft' || ev.key === 'PageUp') { prev(); ev.preventDefault(); }
+else if (ev.key === 'Home') { go(0); ev.preventDefault(); }
+});
+
+function afterNudge(which) {
+if (which === 'n' || which === 'S' || which === 'mat') {
+if (st.allow.v) { St.syncV(st); } else { St.syncI(st); }
+}
+draw();
+}
+$('rgT').addEventListener('input', function () { st.t = parseFloat(this.value); draw(); });
+$('rgI').addEventListener('input', function () { st.I = parseFloat(this.value); St.syncI(st); draw(); });
+$('rgV').addEventListener('input', function () {
+var rv = (st.rng && st.rng.v) || [0.01, 0.4, 0.001];
+st.v = logMap(parseFloat(this.value), rv[0], rv[1]) * 1e-3;
+St.syncV(st); draw();
+});
+$('rgN').addEventListener('input', function () {
+var rn = (st.rng && st.rng.n) || [1, 25, 0.1];
+st.n = logMap(parseFloat(this.value), rn[0], rn[1]) * 1e28;
+afterNudge('n');
+});
+$('rgS').addEventListener('input', function () { st.S = parseFloat(this.value) * 1e-6; afterNudge('S'); });
+
+function bindGroup(sel, attr, fn) {
+var bs = document.querySelectorAll(sel + ' button');
+for (var i = 0; i < bs.length; i++) {
+(function (b) {
+b.addEventListener('click', function () { fn(b.getAttribute('data-' + attr)); });
+})(bs[i]);
+}
+}
+bindGroup('#wrapCarrier', 'carrier', function (v) { st.carrier = v; draw(); });
+bindGroup('#wrapMat', 'mat', function (v) {
+st.mat = v; st.n = P.numberDensity(v); afterNudge('mat');
+});
+bindGroup('#wrapPick', 'pick', function (v) {
+st.qPick = (st.qPick === v) ? 'none' : v; draw();
+});
+bindGroup('#wrapView', 'view', function (v) {
+if (v === 'flat') { st.mode = 'flat'; }
+else if (v === 'solid') { st.mode = '3d'; }
+else { setupView(St.STEPS[st.step].mode || '3d'); draw(); return; }
+draw();
+});
+function setupView(mode) {
+st.mode = mode || '3d';
+st.view.az = 0.36; st.view.el = 0.16; st.view.zoom = 1;
+}
+
+function evPos(ev) {
+var r = cv.getBoundingClientRect();
+var t = ev.touches ? ev.touches[0] : ev;
+return { x: t.clientX - r.left, y: t.clientY - r.top };
+}
+function onDown(ev) {
+ev.preventDefault();
+if (st.mode === 'flat') { return; }
+drag = { x: evPos(ev).x, y: evPos(ev).y };
+cv.style.cursor = 'move';
+}
+function onMove(ev) {
+if (!drag) { return; }
+var p = evPos(ev), dx = p.x - drag.x, dy = p.y - drag.y;
+drag.x = p.x; drag.y = p.y;
+st.view.az = clamp(st.view.az - dx * 0.006, -0.55, 0.55);
+st.view.el = clamp(st.view.el + dy * 0.005, -0.28, 0.62);
+draw();
+ev.preventDefault();
+}
+function onUp() { if (drag) { drag = null; cv.style.cursor = 'default'; } }
+cv.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+cv.addEventListener('mousedown', onDown);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onUp);
+cv.addEventListener('touchstart', onDown, { passive: false });
+cv.addEventListener('touchmove', onMove, { passive: false });
+window.addEventListener('touchend', onUp);
+cv.addEventListener('wheel', function (ev) {
+ev.preventDefault();
+st.view.zoom = clamp(st.view.zoom * Math.exp(-ev.deltaY * 0.0012), 0.55, 2.4);
+draw();
+}, { passive: false });
+cv.addEventListener('dblclick', function () { setupView(St.STEPS[st.step].mode || '3d'); draw(); });
+
+var rzT = null;
+window.addEventListener('resize', function () { clearTimeout(rzT); rzT = setTimeout(draw, 120); });
+
+var tocEl = $('toc'), tocLinks = [], tocMarked = -1;
+(function buildToc() {
+if (!tocEl) { return; }
+var curAct = null;
+for (var i = 0; i < St.STEPS.length; i++) {
+var def = St.STEPS[i];
+if (def.act !== curAct) {
+if (curAct !== null) { var sp = document.createElement('span'); sp.className = 'sep'; tocEl.appendChild(sp); }
+curAct = def.act;
+var lab = document.createElement('span');
+lab.className = 'grouplab';
+lab.textContent = String(def.act).split('·')[0].trim();
+lab.title = def.act;
+tocEl.appendChild(lab);
+}
+var a = document.createElement('a');
+a.title = (i + 1) + '. ' + def.title;
+a.textContent = String(i + 1);
+(function (idx, node) { node.addEventListener('click', function () { go(idx); }); })(i, a);
+tocEl.appendChild(a);
+tocLinks.push(a);
+}
+})();
+function markToc() {
+if (!tocLinks.length || tocMarked === st.step) { return; }
+tocMarked = st.step;
+for (var i = 0; i < tocLinks.length; i++) {
+var on = (i === st.step);
+tocLinks[i].className = on ? 'on' : '';
+if (on && tocLinks[i].scrollIntoView) { tocLinks[i].scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+}
+}
+
+function hash() {
+var f = R.fitCanvas(cv);
+var W = Math.floor(f.W), H = Math.floor(f.H);
+var d = f.ctx.getImageData(0, 0, W, H).data;
+var h = 2166136261 >>> 0;
+for (var i = 0; i < d.length; i += 61) { h ^= d[i]; h = (h * 16777619) >>> 0; }
+return ('00000000' + h.toString(16)).slice(-8);
+}
+
+function verifyI() {
+var cases = 0, maxErr = 0, bad = [];
+function chkRel(a, b, tol, tag) {
+cases++;
+var m = Math.max(Math.abs(a), Math.abs(b)), e = m > 0 ? Math.abs(a - b) / m : 0;
+if (e > maxErr) { maxErr = e; }
+if (!(e <= tol)) { bad.push(tag + ' rel=' + e.toExponential(2)); }
+}
+function chk(cond, tag) { cases++; if (!cond) { bad.push(tag); } }
+var mats = ['cu', 'ag', 'al'], i, j, k;
+var Ss = [0.2e-6, 1e-6, 2e-6], vs = [1e-5, 7.35e-5, 2e-4], ts = [0.5, 8, 20];
+
+for (i = 0; i < mats.length; i++) {
+var n = P.numberDensity(mats[i]);
+for (j = 0; j < vs.length; j++) {
+for (k = 0; k < Ss.length; k++) {
+var S = Ss[k], v = vs[j];
+var Im = P.Imic(n, P.QE, S, v);
+for (var m2 = 0; m2 < ts.length; m2++) {
+var Q = P.barrelCharge(n, P.QE, S, v, ts[m2]);
+chkRel(Q / ts[m2], Im, 1e-9, '①Q/t = nqSv');
+chkRel(P.barrelCount(n, S, v, ts[m2]) / ts[m2] * P.QE, Im, 1e-9, '①Nq/t = nqSv');
+}
+chkRel(P.driftSpeed(Im, n, P.QE, S), v, 1e-9, '①v = I/(nqS)');
+}
+}
+}
+
+var ref = { cu: 7.351e-5, ag: 1.0656e-4, al: 1.0355e-4 };
+for (i = 0; i < mats.length; i++) {
+var n2 = P.numberDensity(mats[i]), vv = P.driftSpeed(1, n2, P.QE, 1e-6);
+chkRel(vv, ref[mats[i]], 0.06, '②教材数值 v(' + mats[i] + ')');
+chk(vv > 0 && vv < 1e-3, '②v 落在 mm/s 以下');
+}
+
+for (i = 0; i < ts.length; i++) {
+var nc = P.numberDensity('cu'), Sc = 1e-6, vc = 7.35e-5;
+var Qc = P.barrelCharge(nc, P.QE, Sc, vc, ts[i]);
+var d = P.WIRE_L / 42;
+var Qd = P.slabQ(nc, P.QE, Sc, vc, ts[i], d);
+chk(Math.abs(Qd - Qc) <= P.slabCharge(nc, P.QE, Sc, d) * (1 + 1e-9), '③离散 ≤ 一层 (t=' + ts[i] + ')');
+}
+
+chkRel(P.hour(P.travelTime(1, P.driftSpeed(1, P.numberDensity('cu'), P.QE, 1e-6))), 3.78, 0.06, '④电子爬 1 m ≈ 3.78 h');
+chkRel(P.travelTime(1, 2.998e8), 3.34e-9, 0.05, '④电场过 1 m ≈ 3.3 ns');
+chk(P.travelTime(1, P.driftSpeed(1, P.numberDensity('cu'), P.QE, 1e-6)) / P.travelTime(1, 2.998e8) > 1e12,
+'④两个速度差 10¹² 倍以上');
+
+var N = 6000, mn = 1e9, mx = -1e9;
+for (i = 0; i <= N; i++) { var wv = P.waveI(i * 6 / N); mn = Math.min(mn, wv); mx = Math.max(mx, wv); }
+var avg = P.waveAvg(6, N);
+chk(avg >= mn - 1e-9 && avg <= mx + 1e-9, '⑤平均电流在波形上下界之间');
+chkRel(P.waveQ(6, N), P.waveQ(6, 600), 1e-6, '⑤积分收敛');
+return { ok: bad.length === 0, cases: cases, maxErr: maxErr, failed: bad.slice(0, 5) };
+}
+
+var CONTROL_WORDS = [
+['时间 t', 't'], ['电流 I', 'I'], ['定向速率 v', 'v'], ['速率 v', 'v'],
+['数密度 n', 'n'], ['横截面积 S', 'S'], ['截面 S', 'S'],
+['材料', 'mat'], ['铜', 'mat'], ['银', 'mat'], ['铝', 'mat'],
+['自由电子', 'carrier'], ['正电荷', 'carrier'], ['载流子', 'carrier'],
+['看定义式的 Q', 'qPick'], ['看微观式的 q', 'qPick']
+];
+var ALLOW_KEYS = { t: 1, I: 1, v: 1, n: 1, S: 1, mat: 1, carrier: 1, qPick: 1 };
+var SCENES = { wire: 1, duel: 1, twoq: 1, misuse: 1, dim: 1, real: 1, timeline: 1, average: 1, summary: 1 };
+function verifySteps() {
+var cases = 0, bad = [];
+function chk(cond, tag) { cases++; if (!cond) { bad.push(tag); } }
+for (var i = 0; i < St.STEPS.length; i++) {
+var d = St.STEPS[i], a = Object.keys(d.allow || {}), k;
+chk(!!d.title, (i + 1) + ' 有标题');
+chk(!!d.formula, (i + 1) + ' 有公式');
+chk(!!d.note, (i + 1) + ' 有说明');
+chk(!!SCENES[d.scene || 'wire'], (i + 1) + ' 场景名合法');
+for (k = 0; k < a.length; k++) { chk(!!ALLOW_KEYS[a[k]], (i + 1) + ' allow 键合法：' + a[k]); }
+var hint = d.hint || '';
+for (k = 0; k < CONTROL_WORDS.length; k++) {
+if (hint.indexOf(CONTROL_WORDS[k][0]) >= 0) {
+var need = CONTROL_WORDS[k][1];
+if (hint.indexOf('不用拖') >= 0) { continue; }
+chk(!!d.allow && d.allow[need] === true, (i + 1) + ' hint 提到「' + CONTROL_WORDS[k][0] + '」→ allow.' + need);
+}
+}
+if (a.length === 0) { chk(hint.indexOf('不用拖') >= 0, (i + 1) + ' 无交互时 hint 必须写明不用拖'); }
+chk((d.rng && d.rng.t ? d.rng.t[0] < d.rng.t[1] : true), (i + 1) + ' 滑块范围合法');
+chk(d.act !== '', (i + 1) + ' 有幕名');
+}
+chk(St.STEPS.length >= 12, '步骤数不少于 12');
+return { ok: bad.length === 0, cases: cases, failed: bad };
+}
+
+window.__viz = {
+state: st, steps: St, phys: P, render: R,
+count: St.STEPS.length,
+go: go, next: next, prev: prev, reset: resetStep, draw: draw, hash: hash,
+selfTest: function () { return P.runSelfTest(); },
+verifyI: verifyI, verifySteps: verifySteps,
+set: function (patch) {
+for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) { st[k] = patch[k]; } }
+if (patch.I !== undefined) { St.syncI(st); }
+if (patch.v !== undefined) { St.syncV(st); }
+if (patch.n !== undefined || patch.S !== undefined) {
+if (st.allow.v && patch.v === undefined) { St.syncV(st); } else if (patch.I === undefined) { St.syncI(st); }
+}
+draw();
+return { t: st.t, I: st.I, v: st.v, n: st.n, S: st.S };
+},
+stepMeta: function () {
+return St.STEPS.map(function (d, i) {
+return { i: i, act: d.act, title: d.title, allow: Object.keys(d.allow || {}), hint: d.hint || '', scene: d.scene || 'wire' };
+});
+}
+};
+
+St.apply(st, 0);
+draw();
+setTimeout(draw, 60);
+})();
+
+</script>
+</body>
+</html>
