@@ -100,6 +100,7 @@
     <div class="canvaswrap"><canvas id="cv"></canvas></div>
     <aside>
       <h3>读数</h3>
+      <div class="rd"><span>已过截面的电荷（数出来的）</span><b class="yellow" id="rdCnt">—</b></div>
       <div class="rd"><span>Q（过截面的电荷量）</span><b class="yellow" id="rdQ">—</b></div>
       <div class="rd"><span>t（所用的时间）</span><b id="rdT">—</b></div>
       <div class="rd"><span>I = Q / t（定义式）</span><b class="yellow" id="rdIdef">—</b></div>
@@ -129,15 +130,22 @@
   <footer>
     <button id="btnPrev">◀ 上一步</button>
     <button id="btnNext" class="main">下一步 ▶</button>
+    <button id="btnPlay">▶ 播放</button>
     <button id="btnReset">↺ 复位本步</button>
     <div class="bar" id="prog"><i></i></div>
 
-    <div class="slider" id="wrapT"><span>时间 t</span><input type="range" id="rgT" min="0" max="20" step="0.1" value="6"><b id="lbT">6.0 s</b></div>
+    <div class="slider" id="wrapT"><span>时间 t</span><input type="range" id="rgT" min="0" max="1" step="0.01" value="0"><b id="lbT">0.00 s</b></div>
+    <div class="slider" id="wrapT2"><span>时间窗口 T</span><input type="range" id="rgT2" min="0.5" max="2" step="0.1" value="1"><b id="lbT2">1.0 s</b></div>
     <div class="slider" id="wrapI"><span>电流 I</span><input type="range" id="rgI" min="0.2" max="2" step="0.05" value="1"><b id="lbI">1.00 A</b></div>
     <div class="slider" id="wrapV"><span>速率 v</span><input type="range" id="rgV" min="0" max="100" value="50"><b id="lbV">—</b></div>
     <div class="slider" id="wrapN"><span>数密度 n</span><input type="range" id="rgN" min="0" max="100" value="50"><b id="lbN">—</b></div>
     <div class="slider" id="wrapS"><span>截面 S</span><input type="range" id="rgS" min="0.2" max="2" step="0.02" value="1"><b id="lbS">1.00 mm²</b></div>
 
+    <div class="grp" id="wrapReveal"><span class="lab">浮现 / 隐藏</span>
+      <button data-rev="dots">自由电荷</button>
+      <button data-rev="barrel">那段柱体</button>
+      <button data-rev="density">电荷密度 n</button>
+    </div>
     <div class="grp" id="wrapCarrier"><span class="lab">载流子</span>
       <button data-carrier="neg">自由电子（负）</button>
       <button data-carrier="pos">正电荷</button>
@@ -181,6 +189,43 @@ function barrelCharge(n, q, S, v, t) { return n * q * S * v * t; }
 function slabCharge(n, q, S, d) { return n * q * S * d; }
 function slabCross(v, t, d) { return Math.floor(v * t / d + 1e-9); }
 function slabQ(n, q, S, v, t, d) { return slabCross(v, t, d) * slabCharge(n, q, S, d); }
+
+var NS = 80;
+var K0 = 3;
+var S0 = 1e-7;
+function dotsPerLayer(n, S) {
+var k = Math.round(K0 * (n / numberDensity('cu')) * (S / S0));
+return k < 1 ? 1 : (k > 6 ? 6 : k);
+}
+function layerX(i, L) { return -L / 2 + (i + 0.5) * (L / NS); }
+function layerPitch(L) { return L / NS; }
+
+function inGroup(i, L, xs, v, T) {
+var x0 = layerX(i, L);
+return (x0 > xs - v * T) && (x0 <= xs);
+}
+
+function groupLayers(L, xs, v, T) {
+var c = 0, i;
+for (i = 0; i < NS; i++) { if (inGroup(i, L, xs, v, T)) { c++; } }
+return c;
+}
+
+function groupDots(L, xs, v, T, n, S) { return groupLayers(L, xs, v, T) * dotsPerLayer(n, S); }
+
+function groupLayersC(L, v, T) { return v * T / (L / NS); }
+
+function layersPassed(L, xs, v, T) {
+var c = 0, i;
+for (i = 0; i < NS; i++) { if (layerX(i, L) + v * T > xs) { c++; } }
+return c;
+}
+
+function crossedLayers(L, xs, v, T) { return layersPassed(L, xs, v, T) - layersPassed(L, xs, v, 0); }
+
+function crossedDots(L, xs, v, T, n, S) { return crossedLayers(L, xs, v, T) * dotsPerLayer(n, S); }
+
+function gateLayer(L, xs, v, T) { return NS - layersPassed(L, xs, v, T); }
 
 function travelTime(L, v) { return v > 0 ? L / v : Infinity; }
 function numberDensity(key) {
@@ -260,7 +305,7 @@ return s * h / 3;
 
 function waveAvg(t, N) { return t > 0 ? waveQ(t, N) / t : NaN; }
 
-var WIRE_L = 3e-3;
+var WIRE_L = 8e-3;
 var WIRE_R = 3.4e-4;
 function radiusOf(S) { return Math.sqrt(S / Math.PI); }
 
@@ -349,6 +394,46 @@ var Ibad = Imic(n3, Qbad, S3, v3);
 chk(Ibad / base > 1e3, '⑪误用后电流被放大千倍以上（符号重载警报）');
 chkRel(Ibad / Qbad, base / q3, 1e-9, '⑪放大倍数恰为 Q/q');
 
+chk(dotsPerLayer(numberDensity('cu'), S0) === K0, '⑩b 参考点每层 3 个');
+chk(dotsPerLayer(numberDensity('cu'), S0 * 3) === 6, '⑩b S 变大 → 每层变多（封顶 6）');
+chk(dotsPerLayer(numberDensity('cu') * 0.2, S0) === 1, '⑩b n 变小 → 每层变少（下限 1）');
+
+chk(dotsPerLayer(3e28, S0) === 1, '⑩b n=3e28 → 每层 1 个');
+chk(dotsPerLayer(20e28, S0) === 6, '⑩b n=2e29 → 每层 6 个');
+var Lw = WIRE_L, xsw = 1.0e-3;
+chk(groupLayers(Lw, xsw, 0, 1) === 0, '⑩b v=0 → 没有电荷会通过');
+chk(groupLayers(Lw, xsw, 7.36e-4, 0) === 0, '⑩b T=0 → 没有电荷会通过');
+chk(groupLayers(Lw, xsw, 7.36e-4, 1.0) > 0, '⑩b 铜默认参数下有电荷通过');
+var prev = -1, mono = true, kk2;
+for (kk2 = 0; kk2 <= 40; kk2++) {
+var g1 = groupLayers(Lw, xsw, kk2 / 40 * 1.5e-3, 1.0);
+if (g1 < prev) { mono = false; }
+prev = g1;
+}
+chk(mono, '⑩b v 越大 → 通过的层数不减');
+prev = -1; mono = true;
+for (kk2 = 0; kk2 <= 40; kk2++) {
+var g2 = groupLayers(Lw, xsw, 7.36e-4, kk2 / 40 * 1.2);
+if (g2 < prev) { mono = false; }
+prev = g2;
+}
+chk(mono, '⑩b T 越大 → 通过的层数不减');
+chk(groupLayers(Lw, xsw, 7.36e-4, 1.0) <= NS, '⑩b 不超过总层数');
+var gd = groupDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0);
+chk(gd === groupLayers(Lw, xsw, 7.36e-4, 1.0) * K0, '⑩b 个数 = 层数 × 每层个数');
+var gc = groupLayersC(Lw, 7.36e-4, 1.0);
+chk(Math.abs(groupLayers(Lw, xsw, 7.36e-4, 1.0) - gc) <= 1.01, '⑩b 离散层数与连续近似差 ≤ 1 层');
+chk(groupDots(Lw, xsw, 2 * 7.36e-4, 1.0, numberDensity('cu'), S0) >
+groupDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0), '⑩b 电流翻倍 → 通过的电荷变多');
+chk(groupDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0 * 2) >
+groupDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0), '⑩b 截面变粗 → 通过的电荷变多');
+
+chk(crossedLayers(Lw, xsw, 7.36e-4, 1.0) === groupLayers(Lw, xsw, 7.36e-4, 1.0), '⑩c 过门层数 = 这批电荷的层数');
+chk(crossedDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0) ===
+groupDots(Lw, xsw, 7.36e-4, 1.0, numberDensity('cu'), S0), '⑩c 过门个数 = 这批电荷的个数');
+chk(crossedLayers(Lw, xsw, 0, 5) === 0, '⑩c 不动就没人过门');
+chk(gateLayer(Lw, xsw, 7.36e-4, 1.0) >= 0 && gateLayer(Lw, xsw, 7.36e-4, 1.0) < NS, '⑩c 过门层号在范围内');
+
 var q1 = waveQ(6, 600), q2 = waveQ(6, 6000);
 chkRel(q1, q2, 1e-6, '⑪b辛普森积分收敛');
 chk(waveAvg(6, 6000) > 0.5 && waveAvg(6, 6000) < 1.6, '⑪b平均电流落在 0.5–1.6 A');
@@ -375,6 +460,10 @@ slabCharge: slabCharge, slabCross: slabCross, slabQ: slabQ,
 travelTime: travelTime, numberDensity: numberDensity, radiusOf: radiusOf,
 mA: mA, uA: uA, mm2: mm2, hour: hour,
 sup: sup, sci: sci, fx: fx, pct: pct, dur: dur, len: len, trimZeros: trimZeros,
+NS: NS, K0: K0, S0: S0,
+dotsPerLayer: dotsPerLayer, layerX: layerX, layerPitch: layerPitch,
+inGroup: inGroup, groupLayers: groupLayers, groupDots: groupDots, groupLayersC: groupLayersC,
+layersPassed: layersPassed, crossedLayers: crossedLayers, crossedDots: crossedDots, gateLayer: gateLayer,
 waveI: waveI, waveQ: waveQ, waveAvg: waveAvg,
 runSelfTest: runSelfTest
 };
@@ -493,12 +582,10 @@ return lower.concat(upper);
 }
 function cross(o, a, b) { return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x); }
 
-var XSEC = -0.4e-3;
+var XSEC = 1.0e-3;
 function geom(st) {
 var L = P.WIRE_L, r = P.radiusOf(st.S);
-
-var slots = clamp(Math.round(42 * st.n / P.numberDensity('cu')), 8, 66);
-return { L: L, r: r, xs: XSEC, x0: -L / 2, x1: L / 2, slots: slots, d: L / slots };
+return { L: L, r: r, xs: XSEC, x0: -L / 2, x1: L / 2, slots: P.NS, d: L / P.NS };
 }
 function projOf(st, view, area, mode) {
 var g = geom(st);
@@ -544,12 +631,14 @@ for (i = 0; i <= n; i++) { th = i / n * Math.PI * 2; out.push(pj.p(x, g.r * Math
 return out;
 }
 
-var PAT = [[-0.42, -0.30], [0.44, 0.18], [0.02, 0.62], [-0.10, -0.66], [0.58, -0.34]];
-function seeds(g) {
-var out = [], k, j;
-for (k = 0; k < g.slots; k++) {
-for (j = 0; j < PAT.length; j++) {
-out.push({ x0: g.x0 + (k + 0.5) * g.d, y: PAT[j][0] * g.r, z: PAT[j][1] * g.r });
+var PAT3 = [[0.00, 0.00], [0.58, 0.28], [-0.50, 0.44], [0.34, -0.58], [-0.46, -0.40], [0.62, -0.30], [-0.20, 0.62], [0.10, -0.14]];
+var PAT2 = [0.00, 0.55, -0.55, 0.28, -0.28, 0.72, -0.72, 0.14];
+function seeds(g, st) {
+var out = [], i, j, k = P.dotsPerLayer(st.n, st.S), flat = (st.mode === 'flat');
+for (i = 0; i < P.NS; i++) {
+for (j = 0; j < k; j++) {
+if (flat) { out.push({ i: i, x0: P.layerX(i, g.L), y: PAT2[j % PAT2.length] * g.r, z: 0 }); }
+else { out.push({ i: i, x0: P.layerX(i, g.L), y: PAT3[j % PAT3.length][0] * g.r, z: PAT3[j % PAT3.length][1] * g.r }); }
 }
 }
 return out;
@@ -560,12 +649,26 @@ x = g.x0 + (((x - g.x0) % L) + L) % L;
 return { x: x, y: s.y, z: s.z };
 }
 
+function passed(s, st, g) {
+var L = g.L, x = s.x0 + st.v * st.t;
+return x > g.xs;
+}
+
 function drawWire(S, st) {
 var ctx = S.ctx, view = st.view, area = S.main;
 var mode = st.mode === 'flat' ? 'flat' : '3d';
 var pj = projOf(st, view, area, mode);
 var g = pj.g, i;
 S.pj = pj;
+
+var Tw = st.T || 1.0;
+st.gSet = {};
+for (i = 0; i < P.NS; i++) { st.gSet[i] = P.inGroup(i, g.L, g.xs, st.v, Tw); }
+st.gateLayer = P.gateLayer(g.L, g.xs, st.v, st.t);
+S.gCount = P.crossedDots(g.L, g.xs, st.v, st.t, st.n, st.S);
+S.gTotal = P.groupDots(g.L, g.xs, st.v, Tw, st.n, st.S);
+S.gLayers = P.groupLayers(g.L, g.xs, st.v, Tw);
+S.k = P.dotsPerLayer(st.n, st.S);
 
 if (mode === 'flat') {
 var a = pj.p(g.x0, g.r, 0), b = pj.p(g.x1, -g.r, 0);
@@ -579,25 +682,37 @@ pathPts(ctx, ringB, true, rgba(T.white, 0.42), 1.1);
 }
 
 if (st.show.barrel) {
-var l = P.barrelLen(st.v, st.t), xb = g.xs - l;
+
+var l = st.v * (st.T || 1.0), shift = st.v * st.t;
+var xb = g.xs - l + shift, xe = g.xs + shift;
 if (l > 1e-7) {
 if (mode === 'flat') {
-var c1 = pj.p(xb, g.r, 0), c2 = pj.p(g.xs, -g.r, 0);
+var c1 = pj.p(xb, g.r, 0), c2 = pj.p(xe, -g.r, 0);
 pathPts(ctx, [{ x: c1.x, y: c1.y }, { x: c2.x, y: c1.y }, { x: c2.x, y: c2.y }, { x: c1.x, y: c2.y }], true,
 T.yellow, 2.2, rgba(T.yellow, 0.18));
 } else {
-pathPts(ctx, hull(ringPts(pj, g, xb).concat(ringPts(pj, g, g.xs))), true, T.yellow, 2.2, rgba(T.yellow, 0.18));
+pathPts(ctx, hull(ringPts(pj, g, xb).concat(ringPts(pj, g, xe))), true, T.yellow, 2.2, rgba(T.yellow, 0.18));
 pathPts(ctx, ringPts(pj, g, xb), true, rgba(T.yellow, 0.55), 1.4, null, [7, 5]);
 }
 }
 }
 
-var sd = seeds(g);
+var sd = seeds(g, st), base = (st.carrier === 'pos' ? T.red : T.blue);
+if (st.show.hideDots) { sd = []; }
 for (i = 0; i < sd.length; i++) {
 var w = posOf(sd[i], st, g);
 var q = pj.p(w.x, w.y, w.z);
 if (q.x < area.x - 20 || q.x > area.x + area.w + 20) { continue; }
-dot(ctx, q, 2.5, st.carrier === 'pos' ? T.red : T.blue, 0.92, st.show.focus === 'carrier' ? 6 : 0);
+var isMark = st.show.gMark && st.gSet && st.gSet[sd[i].i];
+if (isMark) {
+dot(ctx, q, 4.0, T.yellow, 1, 7);
+if (mode !== 'flat') { dot(ctx, q, 2.0, T.white, 1, 0); }
+} else {
+dot(ctx, q, 2.4, base, st.show.gMark ? 0.34 : 0.92, 0);
+}
+if (st.show.gate && passed(sd[i], st, g) && sd[i].i === st.gateLayer) {
+dot(ctx, q, 7.0, T.yellow, 0.55, 10);
+}
 }
 
 if (st.show.section) {
@@ -628,11 +743,31 @@ arrow(ctx, k1, k2, T.white, 2.2, 10);
 txt(ctx, (k1.x + k2.x) / 2, k1.y + 17, '电流方向 I（规定为正电荷移动的方向）', rgba(T.white, 0.92), 12, 'center', 600);
 }
 
+if (st.show.showN) {
+var nx = area.x + area.w - 216, ny = area.y + 16;
+panel(ctx, nx, ny, 200, 52, rgba(T.blue, 0.5), 'rgba(0,0,0,0.55)');
+txt(ctx, nx + 10, ny + 15, '电荷密度 n（导体自己的性质）', rgba(T.white, 0.7), 11, 'left');
+txt(ctx, nx + 10, ny + 36, P.sci(st.n, 2) + ' 个/m³', T.blue, 15, 'left', 700);
+txt(ctx, nx + 10, ny + 36, '', T.white, 11);
+var kk = P.dotsPerLayer(st.n, st.S);
+txt(ctx, nx + 118, ny + 38, '每层 ' + kk + ' 个（示意）', rgba(T.white, 0.62), 11, 'left');
+}
+
+if (st.show.count) {
+var cw = 176, cx0 = area.x + 18, cy0 = area.y + 16;
+panel(ctx, cx0, cy0, cw, 52, rgba(T.yellow, 0.45), 'rgba(0,0,0,0.55)');
+var tot = st.show.gMark ? ('/ ' + S.gTotal + ' 个') : '';
+txt(ctx, cx0 + 10, cy0 + 15, '已经过横截面的电荷（数出来的）', rgba(T.white, 0.7), 11, 'left');
+txt(ctx, cx0 + 10, cy0 + 36, String(S.gCount), T.yellow, 20, 'left', 700);
+txt(ctx, cx0 + 12 + String(S.gCount).length * 12, cy0 + 39,
+tot + '　（T = ' + P.fx(st.T || 1, 2) + ' s）', rgba(T.white, 0.62), 11, 'left');
+}
+
 if (st.show.barrel && st.show.dim) {
-var l2 = P.barrelLen(st.v, st.t);
+var l2 = st.v * (st.T || 1.0), sh2 = st.v * st.t;
 if (l2 > 2e-6) {
-var d1 = pj.p(g.xs - l2, -g.r * 1.75, 0), d2 = pj.p(g.xs, -g.r * 1.75, 0);
-dimLine(ctx, d1.x, d2.x, d1.y, T.yellow, 'l = v·t = ' + P.len(l2), 12.5);
+var d1 = pj.p(g.xs - l2 + sh2, -g.r * 1.75, 0), d2 = pj.p(g.xs + sh2, -g.r * 1.75, 0);
+dimLine(ctx, d1.x, d2.x, d1.y, T.yellow, 'l = v·T = ' + P.len(l2), 12.5);
 }
 }
 return S;
@@ -827,16 +962,30 @@ txt(ctx, c.x + 12, c.y + 46, items[i][2], T().white, 13.5, 'left', 700);
 }
 
 function miniWire(ctx, x, y, w, h, st) {
-
 var x0 = x, x1 = x + w, ya = y, yb = y + h;
 line(ctx, { x: x0, y: ya }, { x: x1, y: ya }, rgba(T().white, 0.5), 1.4);
 line(ctx, { x: x0, y: yb }, { x: x1, y: yb }, rgba(T().white, 0.5), 1.4);
 var gx = x0 + w * 0.62;
+var L = P.WIRE_L, xs = 1.0e-3, v = st.v, Tw = st.T || 1;
+var wxOf = function (xm) { return x0 + (xm + L / 2) / L * w; };
+
+if (st.show && st.show.barrel) {
+var xb = wxOf(xs - v * Tw + v * st.t), xe = wxOf(xs + v * st.t);
+panel(ctx, Math.max(x0, xb), ya, Math.max(2, Math.min(x1, xe) - Math.max(x0, xb)), yb - ya, null, rgba(T().yellow, 0.18));
+}
 line(ctx, { x: gx, y: ya - 6 }, { x: gx, y: yb + 6 }, T().yellow, 2.6);
-var i, k, sp = w / 18;
-for (k = 0; k < 18; k++) {
-var wx = x0 + ((k * sp + st.v * st.t * 2.2) % (w - 6));
-dot(ctx, { x: wx, y: (ya + yb) / 2 + ((k % 3) - 1) * (h / 3) }, 2.2, T().blue, 0.9);
+var k = P.dotsPerLayer(st.n, st.S), i, j;
+for (i = 0; i < P.NS; i++) {
+var xm = P.layerX(i, L) + v * st.t;
+xm = -L / 2 + (((xm + L / 2) % L) + L) % L;
+var px2 = wxOf(xm);
+if (px2 < x0 || px2 > x1) { continue; }
+var marked = P.inGroup(i, L, xs, v, Tw);
+for (j = 0; j < k; j++) {
+var py2 = (ya + yb) / 2 + (j - (k - 1) / 2) * Math.min(9, (h - 6) / Math.max(1, k));
+if (marked) { dot(ctx, { x: px2, y: py2 }, 2.6, T().yellow, 1, 5); }
+else { dot(ctx, { x: px2, y: py2 }, 1.8, T().blue, 0.35); }
+}
 }
 return gx;
 }
@@ -1152,135 +1301,151 @@ window.VizSteps = (function () {
 'use strict';
 var P = window.VizPhys;
 var CU = function () { return P.numberDensity('cu'); };
-var V0 = 7.35e-5;
-
-function base() {
-return {
-step: 0, act: '', title: '', hint: '', note: '', note2: '', formula: '',
-allow: {}, rng: {},
-n: CU(), q: P.QE, S: 1e-6, v: V0, I: 1.0,
-t: 6, mat: 'cu', carrier: 'neg', qPick: 'none',
-scene: 'wire', mode: '3d',
-view: { az: 0.36, el: 0.16, zoom: 1 },
-show: { band: 'none', barrel: false, section: true, arrow: true, dim: false, iArrow: false, chain: 0 }
-};
-}
+var SM = 1e-7;
 function syncI(st) { st.v = P.driftSpeed(st.I, st.n, st.q, st.S); }
 function syncV(st) { st.I = P.Imic(st.n, st.q, st.S, st.v); }
 
-var A1 = '第一幕 · 定义式', A2 = '第二幕 · 微观式', A3 = '第三幕 · 两式对账',
+function base() {
+return {
+step: 0, act: '', title: '', hint: '', note: '', formula: '',
+allow: {}, rng: {},
+n: CU(), q: P.QE, S: SM, v: P.driftSpeed(1, CU(), P.QE, SM), I: 1.0,
+t: 0, T: 1.0, tMax: 1, holdV: false, mat: 'cu', carrier: 'neg', qPick: 'none',
+scene: 'wire', mode: 'flat',
+rev: { dots: true, barrel: true, density: false },
+view: { az: 0.36, el: 0.16, zoom: 1 },
+show: { band: 'none', barrel: false, section: true, arrow: true, dim: false,
+iArrow: false, chain: 0, count: false, gate: false, gMark: false, hideDots: false, showN: false }
+};
+}
+
+var A1 = '第一幕 · 定义式', A2 = '第二幕 · 控制变量', A3 = '第三幕 · 推式与对账',
 A4 = '第四幕 · 真实量级', A5 = '第五幕 · 小结';
 
 var STEPS = [
 
 {
 act: A1, title: '通电导体：数一数过了截面的电荷量',
-hint: '拖 <b>「时间 t」</b>——电荷往右爬，每越过横截面的电荷量都记在右边的 Q 上；下方那条线的端点跟着走',
+hint: '点 <b>「▶ 播放」</b>让电荷跑起来；拖 <b>「时间 t」</b>也可以自己走；下方那条线的端点跟着走',
 note: '电流的定义：<b>单位时间内通过导体横截面的电荷量</b>。量出 t 内过了多少电荷 Q，比值 Q/t 就是电流。',
 formula: 'I = Q / t　（单位：1 A = 1 C/s）',
-allow: { t: true },
-rng: { t: [0, 20, 0.1] },
+allow: { t: true, play: true, I: true },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05] },
 scene: 'wire', mode: '3d',
-show: { band: 'qt', section: true, arrow: true },
-init: function (st) { st.t = 6; st.I = 1.0; syncI(st); }
+show: { band: 'qt', section: true, arrow: true, count: true },
+init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; syncI(st); }
 },
 {
 act: A1, title: 'Q 和 t 一起变，比值不变 —— 所以它能定义电流',
 hint: '拖 <b>「电流 I」</b>看那条黄线斜率变陡；再拖 <b>「时间 t」</b>读同一个点上的 Q 与 Q/t',
 note: '这就是<b>比值定义法</b>：Q 变、t 变，Q/t 对恒定电流始终是同一个数。注意 I 不是由 Q、t 决定的 —— 它由电压和电阻决定，这里只是把它<b>定义</b>成这个比值。',
 formula: 'I = Q/t = 常数（恒定电流）',
-allow: { t: true, I: true },
-rng: { t: [0, 20, 0.1], I: [0.2, 2.0, 0.05] },
+allow: { t: true, I: true, play: true },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05] },
 scene: 'wire', mode: '3d',
-show: { band: 'qt', section: true, arrow: true },
-init: function (st) { st.t = 12; st.I = 1.4; syncI(st); }
+show: { band: 'qt', section: true, arrow: true, count: true },
+init: function (st) { st.T = 1.0; st.t = 0.4; st.I = 1.4; syncI(st); }
 },
 {
 act: A1, title: '三条变形，与“电流方向”的规定',
 hint: '点底栏 <b>「负电荷 / 正电荷」</b>换载流子：电子往右跑时，白色的电流箭头却指向左边',
 note: '三个量知道两个就能求第三个。方向规定：<b>电流方向 = 正电荷定向移动的方向</b>。金属里真正移动的是自由电子（负），所以电流方向与电子运动方向<b>相反</b>；电解液里正负离子同时反向移动，电流方向按正电荷算。',
-note2: '本屏 Q = ',
 formula: 'Q = I·t　　I = Q/t　　t = Q/I',
 allow: { t: true, I: true, carrier: true },
-rng: { t: [0, 20, 0.1], I: [0.2, 2.0, 0.05] },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05] },
 scene: 'wire', mode: 'flat',
 show: { band: 'units', section: true, arrow: true, iArrow: true },
-init: function (st) { st.t = 8; st.I = 1.0; st.carrier = 'neg'; syncI(st); }
+init: function (st) { st.T = 1.0; st.t = 1.0; st.I = 1.0; st.carrier = 'neg'; syncI(st); }
 },
 
 {
-act: A2, title: '把导体放大：四个微观量 n、q、S、v',
-hint: '拖 <b>「定向速率 v」</b>看电荷跑多快；拖 <b>「数密度 n」</b>看电荷挤多密；拖 <b>「横截面积 S」</b>看导体变粗',
-note: '要找的是一条<b>只用微观量</b>算电流的式子。四个量：<b>n</b> 单位体积里的自由电荷数、<b>q</b> 每个自由电荷的电荷量、<b>S</b> 横截面积、<b>v</b> 定向移动的速率。',
-formula: '要推的式子：I = n q S v',
-allow: { v: true, n: true, S: true },
-rng: { v: [0.01, 0.4, 0.001], n: [1.0, 25, 0.1], S: [0.2, 2.0, 0.02] },
+act: A2, title: '控制变量①：同样 1 秒、同一个横截面，只改电流',
+hint: '拖 <b>「电流 I」</b>再点 <b>「▶ 播放」</b>——同样 1 秒里，过门的电荷个数跟着变',
+note: '横截面积不变、时间都是 1 s，唯一的差别是电流大小。数一数：电流越大，1 s 内通过同一个横截面的电荷<b>越多</b> —— 这就是“电流大”的直观含义。',
+formula: '同样 t、同样 S：过门的电荷越多 ⇔ I 越大',
+allow: { I: true, play: true, t: true },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05] },
 scene: 'wire', mode: 'flat',
-show: { band: 'four', section: true, arrow: true },
-init: function (st) { st.t = 5; st.v = V0; syncV(st); }
+show: { count: true, gate: true, section: true, arrow: true },
+init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; st.S = SM; syncI(st); }
 },
 {
-act: A2, title: '第①步：t 内过截面的电荷，都躺在这根柱子里',
-hint: '拖 <b>「时间 t」</b>看黄色柱子变长；拖 <b>「定向速率 v」</b>看柱长 l = v·t 跟着变',
-note: '盯住横截面看：t 秒内将要越过它的电荷，此刻恰好填满截面<b>后方</b>长 l = v·t 的一根柱子。反过来读也成立 —— 柱子里的电荷，正好在 t 内全部过完。',
-formula: 'l = v·t',
-allow: { t: true, v: true },
-rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+act: A2, title: '把这批电荷标出来：1 秒内会过门的就是它们',
+hint: '拖 <b>「电流 I」</b>看黄色那批电荷变多变少；点 <b>「▶ 播放」</b>看它们一个个过门',
+note: '亮起来（黄色）的，就是 <b>1 s 内会全部通过横截面</b>的那些自由电荷。电流越大 → 亮起来的越多 → 每秒过门的电荷越多。这正是控制变量法要学生看见的那条关系。',
+formula: '同样 t、同样 S：N ∝ I',
+allow: { I: true, play: true },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05] },
 scene: 'wire', mode: 'flat',
-show: { band: 'chain', chain: 2, barrel: true, dim: true, section: true, arrow: true },
-init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+show: { count: true, gate: true, gMark: true, section: true, arrow: true },
+init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; st.S = SM; syncI(st); }
 },
 {
-act: A2, title: '第②步：数清这根柱子里有几个电荷',
-hint: '拖 <b>「时间 t」</b>：柱子变胖变长，个数 N 也按同一个比例涨',
-note: '柱体体积 V = S·l = S·v·t。数密度 n 是“每立方米几个”，乘上体积就是个数：N = n·V = n·S·v·t。',
-formula: 'V = S·l = S·v·t　　N = n·V = n·S·v·t',
-allow: { t: true, v: true },
-rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+act: A2, title: '控制变量②：换成任意时间 T —— 哪些电荷能通过？',
+hint: '拖 <b>「时间窗口 T」</b>把柱体拉长；拖 <b>「电流 I」</b>看它跟着怎么变',
+note: '倒推回去想：<b>T 秒内将要过截面的电荷，此刻恰好填满截面后方长 l = v·T 的柱体</b>。这个“柱体法”是推出微观式的关键一步 —— 把“哪些电荷会过门”这件事，变成了一段可以量长度的体积。',
+formula: 'l = v·T　（这段柱体里的电荷，T 内全部过完）',
+allow: { T: true, I: true, play: true, reveal: true },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1] },
 scene: 'wire', mode: 'flat',
-show: { band: 'chain', chain: 4, barrel: true, dim: true, section: true, arrow: true },
-init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+show: { count: true, gate: true, gMark: true, barrel: true, dim: true, section: true, arrow: true },
+init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; st.S = SM; syncI(st); }
 },
 {
-act: A2, title: '第③步：这些电荷全部过截面，再代回定义式',
-hint: '拖 <b>「时间 t」</b>或 <b>「定向速率 v」</b>，看最后一行 I = nqSv 的值怎么变',
-note: '每个电荷带 q，柱子里 N 个合起来 Q = N·q = n·q·S·v·t；而它们过完截面正好用掉时间 t。代回定义式：<b>I = Q/t = n·q·S·v·t ÷ t = n q S v</b>。t 被约掉了 —— 说明结论跟你取多长的时间无关。',
-formula: 'I = Q/t = nqSvt / t = n q S v',
-allow: { t: true, v: true },
-rng: { t: [0, 20, 0.1], v: [0.01, 0.4, 0.001] },
+act: A2, title: '控制变量③：这部分电荷有多少个？还看电荷密度 n',
+hint: '点 <b>「电荷密度 n」</b>把它浮现出来；再拖 <b>「数密度 n」</b>看同一根柱体里电荷变密变疏',
+note: '柱体一样长、时间一样长，里面塞得越<b>密</b>（n 越大），能过门的电荷就越多 → 电流越大。数密度 n 是<b>导体自己的性质</b>：铜约 8.5×10²⁸ 个/m³。',
+formula: '柱体里的电荷数 N = n · V = n · S · v · T',
+allow: { n: true, T: true, reveal: true },
+holdV: true,
+rng: { t: [0, 1, 0.01], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1] },
 scene: 'wire', mode: 'flat',
-show: { band: 'chain', chain: 6, barrel: true, dim: true, section: true, arrow: true },
-init: function (st) { st.t = 8; st.v = V0; syncV(st); }
+show: { count: true, gate: true, gMark: true, barrel: true, dim: true, section: true, arrow: true, showN: true },
+init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; st.S = SM; st.n = 6e28; st.rev.density = true; syncI(st); }
+},
+{
+act: A2, title: '三个因素合起来：I = n q S v',
+hint: '拖 <b>「数密度 n」「电流 I」「时间窗口 T」</b>，看最后一行怎么变',
+note: '柱体体积 V = S·v·T；里面有 N = n·S·v·T 个电荷；每个带 q，合起来 Q = n·q·S·v·T；它们过完截面正好用掉时间 T，代回定义式：<b>I = Q/T = n·q·S·v</b>。T 被约掉了 —— 结论跟你取多长的时间无关。',
+formula: 'I = Q/T = nqSvT / T = n q S v',
+allow: { n: true, I: true, T: true },
+holdV: true,
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1] },
+scene: 'wire', mode: 'flat',
+show: { band: 'chain', chain: 6, barrel: true, dim: true, section: true, arrow: true, gMark: true, showN: true },
+init: function (st) { st.T = 1.0; st.t = 1.0; st.I = 1.0; st.S = SM; syncI(st); }
 },
 
 {
-act: A3, title: '两条路并排算一遍：差恒为 0',
-hint: '拖 <b>「定向速率 v」「数密度 n」「横截面积 S」</b>——左右两栏的数字同时变，中间的相对差始终是 0',
-note: '左边走<b>定义式</b>（数出过截面的电荷量 Q，再除以 t），右边走<b>微观式</b>（n·q·S·v）。同一段导体、同一段时间，两条路给出同一个电流。',
-formula: 'I = Q/t　≡　I = n q S v',
-allow: { v: true, n: true, S: true },
-rng: { v: [0.01, 0.4, 0.001], n: [1.0, 25, 0.1], S: [0.2, 2.0, 0.02] },
+act: A3, title: '两条路并排算一遍：数出来的 = 算出来的',
+hint: '拖 <b>「电流 I」「数密度 n」「时间窗口 T」</b>——左右两栏的数字同时变，中间的相对差始终是 0',
+note: '左边走<b>定义式</b>（真的去数过截面的电荷个数，再乘每个电荷代表的电荷量），右边走<b>微观式</b>（n·q·S·v）。同一段导体、同一段时间，两条路给出同一个电流 —— 微观式不是另一条规律，它就是定义式的微观版。',
+formula: 'I = Q/T　≡　I = n q S v',
+allow: { I: true, n: true, T: true, S: true },
+holdV: true,
+rng: { I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1], S: [0.5, 3, 0.05] },
 scene: 'duel',
-init: function (st) { st.t = 12; st.v = V0; syncV(st); }
+init: function (st) { st.T = 1.0; st.I = 1.0; st.S = SM; syncI(st); }
 },
 {
 act: A3, title: '症结所在：同一个字母 q，两个不同的量',
 hint: '点底栏 <b>「看定义式的 Q」「看微观式的 q」</b>，上面的卡片会亮起来',
 note: '教材两处都写小写 q，但它们根本不是同一个东西：定义式里的 q 是<b>这段时间里过截面的全部电荷量</b>（本课写成大写 Q，1 C 上下）；微观式里的 q 是<b>一个</b>自由电荷的电荷量（金属里就是元电荷 e = 1.602×10⁻¹⁹ C）。',
-formula: 'I = Q / t　　vs　　I = n·q·S·v',
-allow: { qPick: true },
+formula: 'I = Q / T　　vs　　I = n·q·S·v',
+allow: { qPick: true, I: true, T: true },
+rng: { I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1] },
 scene: 'twoq',
-init: function (st) { st.t = 12; st.v = V0; syncV(st); st.qPick = 'def'; }
+init: function (st) { st.T = 1.0; st.I = 1.0; st.qPick = 'def'; syncI(st); }
 },
 {
 act: A3, title: '混用会怎样：错得离谱',
-hint: '拖 <b>「时间 t」</b>把总电荷量 Q 变大，看错误答案跟着疯长',
+hint: '拖 <b>「时间窗口 T」</b>把总电荷量 Q 变大，看错误答案跟着疯长',
 note: '把“总电荷量 Q”当成“单个电荷的电荷量 q”代进微观式，结果会被放大 Q/q 倍 —— 上千万亿倍。真正会算错的人不是不懂公式，是没分清这两个 q。',
 formula: '错：I = n·Q·S·v　（Q 不是单个电荷的电荷量）',
-allow: { t: true },
-rng: { t: [0, 20, 0.1] },
+allow: { T: true, I: true },
+rng: { I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1] },
 scene: 'misuse',
-init: function (st) { st.t = 12; st.v = V0; syncV(st); }
+init: function (st) { st.T = 1.0; st.I = 1.0; syncI(st); }
 },
 {
 act: A3, title: '再上一道保险：量纲自检',
@@ -1297,10 +1462,10 @@ act: A4, title: '铜导线里的真实数字：v 有多慢',
 hint: '点 <b>「铜 / 银 / 铝」</b>换材料；拖 <b>「电流 I」</b>看 v = I/(nqS) 跟着变',
 note: '取铜、S = 1 mm²、I = 1 A：n ≈ 8.5×10²⁸ 个/m³，代进去 v ≈ 0.074 mm/s —— 1 秒钟走不到导线直径的十五分之一。',
 formula: 'v = I / (n q S)',
-allow: { mat: true, I: true },
-rng: { I: [0.2, 2.0, 0.05] },
+allow: { mat: true, I: true, S: true },
+rng: { I: [0.2, 2.0, 0.05], S: [0.2, 2.0, 0.02] },
 scene: 'real',
-init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); syncI(st); }
+init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); st.S = 1e-6; syncI(st); }
 },
 {
 act: A4, title: '那为什么一合闸灯就亮？两个速度差 10¹² 倍',
@@ -1310,7 +1475,7 @@ formula: 'v电子 ≈ 10⁻⁴ m/s　　v电场 ≈ 3×10⁸ m/s',
 allow: { I: true },
 rng: { I: [0.2, 2.0, 0.05] },
 scene: 'timeline',
-init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); syncI(st); }
+init: function (st) { st.I = 1.0; st.mat = 'cu'; st.n = P.numberDensity('cu'); st.S = 1e-6; syncI(st); }
 },
 {
 act: A4, title: '电流变化时，I = Q/t 给的是平均值',
@@ -1326,7 +1491,7 @@ init: function (st) { st.t = 3.0; }
 {
 act: A5, title: '一张卡片带走',
 hint: '最后一步，不用拖 —— 记住这一句：<b>定义式 + 柱体模型 = 微观表达式</b>',
-note: '两条式子不是并列的两个规律。定义式是“电流是什么”，微观式是“电流由哪些微观量决定”；微观式由定义式加一个柱体模型推出，所以它们永远自洽、不可能打架。',
+note: '两条式子不是并列的两个规律。定义式是“电流是什么”，微观式是“电流由哪些微观量决定”；微观式由定义式加一个柱体模型推出，所以它们永远自洽、不可能打架。唯一要当心的是：两个 q 不是同一个 q。',
 formula: 'I = Q/t　→（柱体模型）→　I = n q S v',
 allow: {},
 scene: 'summary',
@@ -1338,22 +1503,28 @@ function apply(st, i) {
 i = Math.max(0, Math.min(STEPS.length - 1, i));
 var d = STEPS[i], k, b = base();
 for (k in b) { if (Object.prototype.hasOwnProperty.call(b, k)) { st[k] = b[k]; } }
-st.show = { band: 'none', barrel: false, section: true, arrow: true, dim: false, iArrow: false, chain: 0 };
+st.rev = { dots: true, barrel: true, density: false };
+st.show = { band: 'none', barrel: false, section: true, arrow: true, dim: false,
+iArrow: false, chain: 0, count: false, gate: false, gMark: false, hideDots: false, showN: false };
 if (d.init) { d.init(st); }
 st.step = i;
 st.act = d.act; st.title = d.title;
-st.hint = d.hint || ''; st.note = d.note || ''; st.note2 = d.note2 || '';
+st.hint = d.hint || ''; st.note = d.note || '';
 st.formula = d.formula || '';
 st.allow = d.allow || {};
 st.rng = d.rng || {};
+st.tMax = (st.rng.t ? st.rng.t[1] : 1);
 st.scene = d.scene || 'wire';
-st.mode = d.mode || '3d';
+st.mode = d.mode || 'flat';
 var sh = d.show || {};
 for (k in sh) { if (Object.prototype.hasOwnProperty.call(sh, k)) { st.show[k] = sh[k]; } }
+st.hasBarrel = !!st.show.barrel;
+st.hasN = !!st.show.showN;
+st.holdV = !!d.holdV;
 return st;
 }
 
-return { STEPS: STEPS, baseState: base, apply: apply, syncI: syncI, syncV: syncV, V0: V0 };
+return { STEPS: STEPS, baseState: base, apply: apply, syncI: syncI, syncV: syncV };
 })();
 
 
@@ -1389,6 +1560,10 @@ function updatePanel() {
 var Q = chargeNow(), Id = idefNow(), Im = P.Imic(st.n, st.q, st.S, st.v);
 var rel = Math.max(Math.abs(Id), Math.abs(Im)) > 0 ? Math.abs(Id - Im) / Math.max(Math.abs(Id), Math.abs(Im)) : 0;
 var isAvg = (st.scene === 'average');
+var g = R.geom(st);
+var cnt = P.crossedDots(g.L, g.xs, st.v, st.t, st.n, st.S);
+var tot = P.groupDots(g.L, g.xs, st.v, st.T, st.n, st.S);
+$('rdCnt').textContent = cnt + ' 个' + (st.show.gMark ? ' / 共 ' + tot + ' 个' : '');
 $('rdQ').textContent = P.fx(Q, 3) + ' C';
 $('rdT').textContent = P.fx(st.t, 2) + ' s';
 $('rdIdef').textContent = P.fx(Id, 4) + ' A';
@@ -1408,7 +1583,10 @@ el.min = rng[0]; el.max = rng[1]; el.step = rng[2] || 0.1;
 function updateControls() {
 var a = st.allow || {}, rg = st.rng || {};
 show($('wrapT'), !!a.t); show($('wrapI'), !!a.I);
+show($('wrapT2'), !!a.T);
 show($('wrapV'), !!a.v); show($('wrapN'), !!a.n); show($('wrapS'), !!a.S);
+show($('wrapReveal'), !!a.reveal);
+show($('btnPlay'), !!a.play);
 show($('wrapCarrier'), !!a.carrier);
 show($('wrapMat'), !!a.mat);
 show($('wrapPick'), !!a.qPick);
@@ -1445,6 +1623,12 @@ setRange($('rgS'), rg.S || [0.2, 2, 0.02]);
 $('rgS').value = st.S * 1e6;
 $('lbS').textContent = P.fx(st.S * 1e6, 2) + ' mm²';
 }
+if (a.T) {
+setRange($('rgT2'), rg.T || [0.5, 2, 0.1]);
+$('rgT2').value = st.T;
+$('lbT2').textContent = P.fx(st.T, 1) + ' s';
+}
+markReveal();
 markGroup('#wrapCarrier', 'carrier', st.carrier);
 markGroup('#wrapMat', 'mat', st.mat);
 markGroup('#wrapPick', 'pick', st.qPick);
@@ -1454,6 +1638,13 @@ var k = vb[i].getAttribute('data-view');
 vb[i].className = ((k === 'flat' && st.mode === 'flat') || (k === 'solid' && st.mode === '3d')) ? 'on' : '';
 }
 }
+function markReveal() {
+var bs = document.querySelectorAll('#wrapReveal button');
+for (var i = 0; i < bs.length; i++) {
+var k = bs[i].getAttribute('data-rev');
+bs[i].className = st.rev[k] ? 'on' : '';
+}
+}
 function markGroup(sel, attr, val) {
 var bs = document.querySelectorAll(sel + ' button');
 for (var i = 0; i < bs.length; i++) {
@@ -1461,7 +1652,7 @@ bs[i].className = (bs[i].getAttribute('data-' + attr) === val) ? 'on' : '';
 }
 }
 
-function go(i) { St.apply(st, i); draw(); }
+function go(i) { stopPlay(); St.apply(st, i); applyReveal(); draw(); }
 function next() { go(st.step + 1); }
 function prev() { go(st.step - 1); }
 function resetStep() { go(st.step); }
@@ -1490,11 +1681,12 @@ else if (ev.key === 'Home') { go(0); ev.preventDefault(); }
 
 function afterNudge(which) {
 if (which === 'n' || which === 'S' || which === 'mat') {
-if (st.allow.v) { St.syncV(st); } else { St.syncI(st); }
+if (st.holdV) { St.syncV(st); } else { St.syncI(st); }
 }
 draw();
 }
 $('rgT').addEventListener('input', function () { st.t = parseFloat(this.value); draw(); });
+$('rgT2').addEventListener('input', function () { st.T = parseFloat(this.value); draw(); });
 $('rgI').addEventListener('input', function () { st.I = parseFloat(this.value); St.syncI(st); draw(); });
 $('rgV').addEventListener('input', function () {
 var rv = (st.rng && st.rng.v) || [0.01, 0.4, 0.001];
@@ -1517,6 +1709,11 @@ b.addEventListener('click', function () { fn(b.getAttribute('data-' + attr)); })
 }
 }
 bindGroup('#wrapCarrier', 'carrier', function (v) { st.carrier = v; draw(); });
+bindGroup('#wrapReveal', 'rev', function (v) {
+st.rev[v] = !st.rev[v];
+applyReveal();
+draw();
+});
 bindGroup('#wrapMat', 'mat', function (v) {
 st.mat = v; st.n = P.numberDensity(v); afterNudge('mat');
 });
@@ -1533,6 +1730,39 @@ function setupView(mode) {
 st.mode = mode || '3d';
 st.view.az = 0.36; st.view.el = 0.16; st.view.zoom = 1;
 }
+
+function applyReveal() {
+st.show.hideDots = !st.rev.dots;
+st.show.barrel = !!st.hasBarrel && !!st.rev.barrel;
+st.show.showN = !!st.hasN && !!st.rev.density;
+}
+
+var playing = false, playT0 = 0, playT1 = 0, playRaf = 0;
+function stopPlay() {
+playing = false;
+if (playRaf) { cancelAnimationFrame(playRaf); playRaf = 0; }
+var b = $('btnPlay');
+if (b) { b.textContent = '▶ 播放'; b.className = 'main'; }
+}
+function tickPlay(now) {
+if (!playing) { return; }
+var k = (now - playT0) / playT1;
+if (k >= 1) { st.t = st.tMax; stopPlay(); draw(); return; }
+st.t = k * st.tMax;
+draw();
+playRaf = requestAnimationFrame(tickPlay);
+}
+function startPlay() {
+if (playing) { stopPlay(); draw(); return; }
+var b = $('btnPlay');
+playing = true;
+b.textContent = '⏸ 暂停'; b.className = 'on';
+playT0 = performance.now();
+playT1 = 2600;
+st.t = 0; draw();
+playRaf = requestAnimationFrame(tickPlay);
+}
+$('btnPlay').addEventListener('click', startPlay);
 
 function evPos(ev) {
 var r = cv.getBoundingClientRect();
@@ -1671,13 +1901,15 @@ return { ok: bad.length === 0, cases: cases, maxErr: maxErr, failed: bad.slice(0
 }
 
 var CONTROL_WORDS = [
-['时间 t', 't'], ['电流 I', 'I'], ['定向速率 v', 'v'], ['速率 v', 'v'],
-['数密度 n', 'n'], ['横截面积 S', 'S'], ['截面 S', 'S'],
-['材料', 'mat'], ['铜', 'mat'], ['银', 'mat'], ['铝', 'mat'],
-['自由电子', 'carrier'], ['正电荷', 'carrier'], ['载流子', 'carrier'],
-['看定义式的 Q', 'qPick'], ['看微观式的 q', 'qPick']
+['「时间 t」', 't'], ['「电流 I」', 'I'], ['「定向速率 v」', 'v'], ['「速率 v」', 'v'],
+['「时间窗口 T」', 'T'], ['「▶ 播放」', 'play'],
+['「数密度 n」', 'n'], ['「电荷密度 n」', 'reveal'],
+['「横截面积 S」', 'S'], ['「截面 S」', 'S'],
+['「铜 / 银 / 铝」', 'mat'], ['「铜」', 'mat'], ['「银」', 'mat'], ['「铝」', 'mat'],
+['「负电荷 / 正电荷」', 'carrier'], ['「自由电子」', 'carrier'], ['「正电荷」', 'carrier'],
+['「看定义式的 Q」', 'qPick'], ['「看微观式的 q」', 'qPick']
 ];
-var ALLOW_KEYS = { t: 1, I: 1, v: 1, n: 1, S: 1, mat: 1, carrier: 1, qPick: 1 };
+var ALLOW_KEYS = { t: 1, I: 1, v: 1, n: 1, S: 1, mat: 1, carrier: 1, qPick: 1, T: 1, play: 1, reveal: 1 };
 var SCENES = { wire: 1, duel: 1, twoq: 1, misuse: 1, dim: 1, real: 1, timeline: 1, average: 1, summary: 1 };
 function verifySteps() {
 var cases = 0, bad = [];
@@ -1716,7 +1948,7 @@ for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) { st[
 if (patch.I !== undefined) { St.syncI(st); }
 if (patch.v !== undefined) { St.syncV(st); }
 if (patch.n !== undefined || patch.S !== undefined) {
-if (st.allow.v && patch.v === undefined) { St.syncV(st); } else if (patch.I === undefined) { St.syncI(st); }
+if (st.holdV && patch.v === undefined) { St.syncV(st); } else if (patch.I === undefined) { St.syncI(st); }
 }
 draw();
 return { t: st.t, I: st.I, v: st.v, n: st.n, S: st.S };
