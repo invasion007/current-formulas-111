@@ -1388,11 +1388,12 @@ markToc();
 function updatePanel() {
 var Q = chargeNow(), Id = idefNow(), Im = P.Imic(st.n, st.q, st.S, st.v);
 var rel = Math.max(Math.abs(Id), Math.abs(Im)) > 0 ? Math.abs(Id - Im) / Math.max(Math.abs(Id), Math.abs(Im)) : 0;
+var isAvg = (st.scene === 'average');
 $('rdQ').textContent = P.fx(Q, 3) + ' C';
 $('rdT').textContent = P.fx(st.t, 2) + ' s';
 $('rdIdef').textContent = P.fx(Id, 4) + ' A';
-$('rdImic').textContent = P.fx(Im, 4) + ' A';
-$('rdDiff').textContent = (rel * 100).toFixed(6) + ' %';
+$('rdImic').textContent = isAvg ? '—' : P.fx(Im, 4) + ' A';
+$('rdDiff').textContent = isAvg ? '—' : (rel * 100).toFixed(6) + ' %';
 $('rdN').textContent = P.sci(st.n, 2) + ' /m³';
 $('rdQq').textContent = P.sci(st.q, 2) + ' C';
 $('rdS').textContent = P.fx(st.S * 1e6, 2) + ' mm²';
