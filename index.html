@@ -744,8 +744,10 @@ txt(ctx, (k1.x + k2.x) / 2, k1.y + 17, '电流方向 I（规定为正电荷移�
 }
 
 if (st.show.showN) {
-var nx = area.x + area.w - 216, ny = area.y + 16;
-panel(ctx, nx, ny, 200, 52, rgba(T.blue, 0.5), 'rgba(0,0,0,0.55)');
+var narrow = area.w < 560;
+var nx = narrow ? area.x + 18 : area.x + area.w - 216;
+var ny = narrow ? area.y + (st.show.count ? 76 : 16) : area.y + 16;
+panel(ctx, nx, ny, Math.min(200, area.w - 36), 52, rgba(T.blue, 0.5), 'rgba(0,0,0,0.55)');
 txt(ctx, nx + 10, ny + 15, '电荷密度 n（导体自己的性质）', rgba(T.white, 0.7), 11, 'left');
 txt(ctx, nx + 10, ny + 36, P.sci(st.n, 2) + ' 个/m³', T.blue, 15, 'left', 700);
 txt(ctx, nx + 10, ny + 36, '', T.white, 11);
@@ -754,7 +756,7 @@ txt(ctx, nx + 118, ny + 38, '每层 ' + kk + ' 个（示意）', rgba(T.white, 0
 }
 
 if (st.show.count) {
-var cw = 176, cx0 = area.x + 18, cy0 = area.y + 16;
+var cw = Math.min(176, area.w - 36), cx0 = area.x + 18, cy0 = area.y + 16;
 panel(ctx, cx0, cy0, cw, 52, rgba(T.yellow, 0.45), 'rgba(0,0,0,0.55)');
 var tot = st.show.gMark ? ('/ ' + S.gTotal + ' 个') : '';
 txt(ctx, cx0 + 10, cy0 + 15, '已经过横截面的电荷（数出来的）', rgba(T.white, 0.7), 11, 'left');
@@ -1398,7 +1400,7 @@ note: '柱体一样长、时间一样长，里面塞得越<b>密</b>（n 越大�
 formula: '柱体里的电荷数 N = n · V = n · S · v · T',
 allow: { n: true, T: true, reveal: true },
 holdV: true,
-rng: { t: [0, 1, 0.01], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1] },
+rng: { t: [0, 1, 0.01], T: [0.5, 2, 0.1], n: [3.0, 16, 0.1] },
 scene: 'wire', mode: 'flat',
 show: { count: true, gate: true, gMark: true, barrel: true, dim: true, section: true, arrow: true, showN: true },
 init: function (st) { st.T = 1.0; st.t = 0; st.I = 1.0; st.S = SM; st.n = 6e28; st.rev.density = true; syncI(st); }
@@ -1410,7 +1412,7 @@ note: '柱体体积 V = S·v·T；里面有 N = n·S·v·T 个电荷；每个带
 formula: 'I = Q/T = nqSvT / T = n q S v',
 allow: { n: true, I: true, T: true },
 holdV: true,
-rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1] },
+rng: { t: [0, 1, 0.01], I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 16, 0.1] },
 scene: 'wire', mode: 'flat',
 show: { band: 'chain', chain: 6, barrel: true, dim: true, section: true, arrow: true, gMark: true, showN: true },
 init: function (st) { st.T = 1.0; st.t = 1.0; st.I = 1.0; st.S = SM; syncI(st); }
@@ -1423,7 +1425,7 @@ note: '左边走<b>定义式</b>（真的去数过截面的电荷个数，再乘
 formula: 'I = Q/T　≡　I = n q S v',
 allow: { I: true, n: true, T: true, S: true },
 holdV: true,
-rng: { I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 20, 0.1], S: [0.5, 3, 0.05] },
+rng: { I: [0.2, 2.0, 0.05], T: [0.5, 2, 0.1], n: [3.0, 16, 0.1], S: [0.5, 3, 0.05] },
 scene: 'duel',
 init: function (st) { st.T = 1.0; st.I = 1.0; st.S = SM; syncI(st); }
 },
